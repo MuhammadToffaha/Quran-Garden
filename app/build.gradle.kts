@@ -11,8 +11,10 @@ android {
         applicationId = "com.toffaha.qurangarden"
         minSdk = 24
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+        // Auto-bumped on every GitHub Actions build, so updates always install over the old app.
+        val run = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 1
+        versionCode = run
+        versionName = "1.$run"
     }
 
     buildTypes {

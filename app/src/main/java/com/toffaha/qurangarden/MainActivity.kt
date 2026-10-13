@@ -10,6 +10,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
+import android.speech.tts.TextToSpeech
 import android.util.Base64
 import android.view.WindowManager
 import android.webkit.JavascriptInterface
@@ -29,6 +30,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.webkit.WebViewAssetLoader
 import java.io.File
+import java.util.Locale
 
 /**
  * Quran Garden — a thin Android shell around the web app.
@@ -41,6 +43,9 @@ class MainActivity : ComponentActivity() {
     private lateinit var web: WebView
     private var fileCallback: ValueCallback<Array<Uri>>? = null
     private var pendingPermission: PermissionRequest? = null
+    private var tts: TextToSpeech? = null
+    private var ttsReady = false
+    private var pendingSpeech: String? = null
 
     private val pickFile =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { res ->
@@ -146,11 +151,29 @@ class MainActivity : ComponentActivity() {
             }
         })
 
+        tts = TextToSpeech(this) { status ->
+            if (status == TextToSpeech.SUCCESS) {
+                tts?.language = Locale("ar")
+                tts?.setSpeechRate(0.9f)
+                tts?.setPitch(1.1f)
+                ttsReady = true
+                pendingSpeech?.let { web.post { Bridge().speak(it) } }
+                pendingSpeech = null
+            }
+        }
+
         if (savedInstanceState != null) {
             web.restoreState(savedInstanceState)
         } else {
             web.loadUrl(START_URL)
         }
+    }
+
+    override fun onDestroy() {
+        tts?.stop()
+        tts?.shutdown()
+        tts = null
+        super.onDestroy()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -189,6 +212,20 @@ class MainActivity : ComponentActivity() {
                 true
             } catch (e: Exception) {
                 false
+            }
+        }
+
+        /** Says a child's name out loud in Arabic (WebView has no speechSynthesis). */
+        @JavascriptInterface
+        fun speak(text: String) {
+            runOnUiThread {
+                val engine = tts
+                if (engine != null && ttsReady) {
+                    val params = Bundle().apply { putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, 1.0f) }
+                    engine.speak(text.take(60), TextToSpeech.QUEUE_FLUSH, params, "kid-name")
+                } else {
+                    pendingSpeech = text.take(60)
+                }
             }
         }
 
