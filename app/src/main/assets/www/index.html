@@ -287,6 +287,45 @@ header,main,.overlay>.modal,#gEnd,#toast,#shead,#pctrl{zoom:var(--ui)}
 #player.focus #reader{padding-top:28px;padding-bottom:110px}
 #player.focus .focusPause{display:flex;position:absolute;bottom:22px;left:22px;z-index:3;width:60px;height:60px;border-radius:50%;border:3px solid #fff;background:var(--ink);color:#fff;align-items:center;justify-content:center;opacity:.85;box-shadow:0 4px 0 rgba(0,0,0,.25)}
 #player.focus .focusPause:hover{opacity:1}
+/* ---------- tajweed ---------- */
+.qtext.tjon .tj-madda_necessary{color:#B71C1C}
+.qtext.tjon .tj-madda_obligatory{color:#E53935}
+.qtext.tjon .tj-madda_permissible{color:#F4511E}
+.qtext.tjon .tj-madda_normal{color:#D9822B}
+.qtext.tjon .tj-ghunnah{color:#16A34A}
+.qtext.tjon .tj-ikhfa{color:#0E9F6E}
+.qtext.tjon .tj-ikhfa_shafawi{color:#0E9F6E}
+.qtext.tjon .tj-idgham_ghunnah{color:#15803D}
+.qtext.tjon .tj-idgham_shafawi{color:#15803D}
+.qtext.tjon .tj-iqlab{color:#2E7D32}
+.qtext.tjon .tj-idgham_wo_ghunnah{color:#7F8C8D}
+.qtext.tjon .tj-idgham_mutajanisayn{color:#7F8C8D}
+.qtext.tjon .tj-idgham_mutaqaribayn{color:#7F8C8D}
+.qtext.tjon .tj-qalaqah{color:#1D6FD8}
+.qtext.tjon .tj-ham_wasl{color:#9AA0A6}
+.qtext.tjon .tj-laam_shamsiyah{color:#9AA0A6}
+.qtext.tjon .tj-slnt{color:#9AA0A6}
+.qtext.tjon .w.now .tj{filter:brightness(.8)}
+.tjlegend{display:flex;flex-wrap:wrap;gap:6px;max-width:1000px;margin:0 auto 8px;justify-content:center}
+.tjchip{display:flex;align-items:center;gap:6px;min-height:36px;border-radius:999px;border:2px solid var(--line);background:#fff;color:var(--ink);font-size:14px;font-weight:800;padding:2px 12px}
+.tjchip i{width:14px;height:14px;border-radius:50%;display:inline-block}
+/* ---------- meaning ---------- */
+.mbox{background:var(--soft);border-radius:18px;padding:12px 14px;margin-top:12px;font-size:17px;line-height:1.8}
+.mbox p{margin:6px 0 0}
+.mbox.story{background:#F2ECFF}
+.mbox.quizq{background:#E9F5DF}
+.mayah{border-top:2px dashed var(--line);padding:8px 0}
+.mayah p{font-size:16px}
+/* ---------- badges ---------- */
+.badgegrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.badge2{display:flex;flex-direction:column;align-items:center;gap:3px;text-align:center;border-radius:20px;padding:12px 8px;background:#F4F1EA;border:3px solid #E6DFCF;opacity:.75}
+.badge2.got{background:#FFF6D6;border-color:#E0A915;opacity:1;box-shadow:0 4px 0 #E8C766}
+.badge2 .bic{font-size:40px;line-height:1.2}
+.badge2.got .bic{animation:pop .6s cubic-bezier(.3,1.6,.5,1)}
+.badge2 small{font-size:13px;color:#5B4A33}
+.bdate{font-size:12px;color:#7A4B00}
+.bprog{display:block;width:80%;height:8px;border-radius:999px;background:#E3DCCB;overflow:hidden;direction:ltr}
+.bprog i{display:block;height:100%;background:var(--leaf)}
 /* ---------- journey scene ---------- */
 :root{--js1:#7CC8EE;--js2:#DDF3FC;--jh1:#9FD38A;--jh2:#7DC067;--jh3:#62AE4E;--jroad:#F2CF3E;--jedge:#D9AE1E}
 body[data-theme="sea"]{--js1:#5BB8E6;--js2:#E3F6FF;--jh1:#9ED8C6;--jh2:#6FC3B0;--jh3:#4FAE98;--jroad:#F6E3B4;--jedge:#D9BE7E}
@@ -436,7 +475,7 @@ body{transition:background .4s}
         <p class="sub">كل سورة بذرة… استمع، كرّر، احفظ فتصير زهرة!</p>
       </div>
     </div>
-    <div class="topbtns"><button class="parentBtn themeBtn" data-themes aria-label="اختر شكل الحديقة"><span aria-hidden="true">🎨</span><span class="btxt">الألوان</span></button>
+    <div class="topbtns"><button class="parentBtn themeBtn" data-badges aria-label="أوسمتي"><span aria-hidden="true">🏅</span><span class="btxt">أوسمتي</span></button><button class="parentBtn themeBtn" data-themes aria-label="اختر شكل الحديقة"><span aria-hidden="true">🎨</span><span class="btxt">الألوان</span></button>
     <button class="parentBtn" id="openParent"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M8 10 V7 a4 4 0 0 1 8 0 V10" fill="none" stroke="currentColor" stroke-width="2.4"/></svg><span class="btxt">لوحة الوالدين</span></button></div>
   </div>
   <div class="wrap kids" id="kids" role="group" aria-label="اختر البطل"></div>
@@ -460,6 +499,8 @@ body{transition:background .4s}
 </section>
 <div class="overlay" id="welcomeOv" hidden style="z-index:57"><div class="modal" role="dialog" aria-modal="true" aria-label="مرحباً" id="welcomeBox"></div></div>
 <div class="overlay" id="recOv" hidden style="z-index:54"><div class="modal" role="dialog" aria-modal="true" aria-label="تسجيل التسميع" id="recBox"></div></div>
+<div class="overlay" id="meanOv" hidden style="z-index:51"><div class="modal" role="dialog" aria-modal="true" aria-label="معنى السورة" id="meanBox" style="width:min(100%,760px)"></div></div>
+<div class="overlay" id="badgeOv" hidden style="z-index:51"><div class="modal" role="dialog" aria-modal="true" aria-label="الأوسمة" id="badgeBox" style="width:min(100%,860px)"></div></div>
 <div class="overlay" id="cheerOv" hidden style="z-index:56"><div class="modal cheer" role="dialog" aria-modal="true" id="cheerBox"></div></div>
 <canvas id="confetti" aria-hidden="true"></canvas>
 <input type="file" id="importFile" accept="application/json" hidden>
@@ -542,17 +583,18 @@ function showText(){return true;}
 function renderReader(force){
   var r=document.getElementById('reader');
   if(!S.sel){r.innerHTML='';readerKey='';return;}
-  var s=S.sel,memo=S.mode==='memo',key=s+':'+S.from+':'+S.to+':'+S.mode+':'+(S.hide?'h':'')+':'+(textCache[s]?1:0)+':'+(textCache[1]?1:0)+':'+(textFail[s]?1:0);
+  var s=S.sel,memo=S.mode==='memo',key=s+':'+S.from+':'+S.to+':'+S.mode+':'+(S.hide?'h':'')+':'+(tjOn()&&tjCache[s]?'t':'')+':'+(textCache[s]?1:0)+':'+(textCache[1]?1:0)+':'+(textFail[s]?1:0);
   if(!force&&key===readerKey)return;readerKey=key;hl={ay:null,w:null};
   var T=textCache[s];
   if(!T){r.innerHTML='<p class="rmsg">'+(textFail[s]?'تعذّر تحميل نص الآيات — تأكد من الاتصال بالإنترنت.':'جارٍ تحميل نص الآيات…')+'</p>';return;}
-  var h='<p class="qtext'+(S.hide?' hide':'')+'">';
+  if(tjOn())ensureTajweed(s);
+  var h=(S.hide?'':tjLegendHtml(s))+'<p class="qtext'+(S.hide?' hide':'')+(tjOn()?' tjon':'')+'">';
   if(S.hide)h='<p class="rmsg" style="font-family:inherit">🙈 اختبر نفسك: اقرأ من حفظك، ثم اضغط على الآية لتتأكد.</p>'+h;
   if(needsBasmala(s,1)){var B=textCache[1]&&textCache[1][1];
     h+='<span class="ay bas" data-ay="b">'+(B?B.map(function(w,i){return '<span class="w" data-w="b-'+(i+1)+'">'+esc(w)+'</span>';}).join(' '):'بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ')+'</span>';}
   for(var a=1;a<=SURAHS[s][1];a++){
     var W=T[a]||[],out=memo&&(a<S.from||a>S.to);
-    h+='<span class="ay'+(out?' out':'')+'" data-ay="'+a+'" role="button" tabindex="0" aria-label="ابدأ من الآية '+ar(a)+'">'+W.map(function(w,i){return '<span class="w" data-w="'+a+'-'+(i+1)+'">'+esc(w)+'</span>';}).join(' ')+'<span class="anum">'+ar(a)+'</span></span> ';
+    h+='<span class="ay'+(out?' out':'')+'" data-ay="'+a+'" role="button" tabindex="0" aria-label="ابدأ من الآية '+ar(a)+'">'+W.map(function(w,i){return '<span class="w" data-w="'+a+'-'+(i+1)+'">'+tjWordHtml(s,a,i,w)+'</span>';}).join(' ')+'<span class="anum">'+ar(a)+'</span></span> ';
   }
   r.innerHTML=h+'</p>';
 }
@@ -604,7 +646,7 @@ var D={kid:0,kids:[newKid('البطل الأول',0),newKid('البطل الثا
 })();
 var DEF_SET={ayahRep:3,rangeRep:1,goal:20,pause:1,rate:1,sfx:true,approve:true,mode:'read',listenCap:50,uiScale:.85,t1:1,t2:2,t3:3,revNear:3,revFar:7,gameMin:10,gameRevMin:2,money:{per:100,amt:5,cur:'يورو'}};
 function normKid(k){
-  ['prog','days','aw','zd','quiz','lp','al','ready','rev','memAt','recs'].forEach(function(f){if(!k[f]||typeof k[f]!=='object')k[f]={};});
+  ['prog','days','aw','zd','quiz','lp','al','ready','rev','memAt','recs','meant','badges','flags'].forEach(function(f){if(!k[f]||typeof k[f]!=='object')k[f]={};});
   k.plan=clamp(parseInt(k.plan,10)||ORDER.length,1,ORDER.length);
   k.gameMs=Math.max(0,+k.gameMs||0);k.gameBest=+k.gameBest||0;
   if(['garden','sea','desert','space','rose'].indexOf(k.theme)<0)k.theme='garden';
@@ -876,7 +918,7 @@ function recordListen(s,a){
   if(!s||!a)return;var k=K(),arr=k.al[s]||(k.al[s]=[]);arr[a]=(arr[a]||0)+1;
   if(S.heardFor!==s){S.heard={};S.heardFor=s;}S.heard[a]=1;
   if((k.prog[s]||0)===3&&Object.keys(S.heard).length>=SURAHS[s][1]&&k.rev[s]!==dkey()){
-    k.rev[s]=dkey();S.heard={};addPts(k,10,'مراجعة سورة '+SURAHS[s][0]);
+    k.rev[s]=dkey();S.heard={};k.revCount=(k.revCount||0)+1;addPts(k,10,'مراجعة سورة '+SURAHS[s][0]);
     if(D.set.gameRevMin>0)k.gameMs=(k.gameMs||0)+D.set.gameRevMin*60000;
     save();chime([659,784,988]);toast('✅ راجعت سورة '+SURAHS[s][0]+' +١٠ نقاط'+(D.set.gameRevMin>0?' و🎮 '+ar(D.set.gameRevMin)+' دقائق لعب':''));
   }
@@ -1059,6 +1101,239 @@ function bgLoad(){
 }
 setTimeout(bgLoad,1200);
 document.addEventListener('visibilitychange',function(){if(!document.hidden)bgLoad();});
+/* ---------- 🎨 tajweed colors (quran.com tajweed text, sanitized) ---------- */
+var TJ={
+  madda_necessary:['#B71C1C','مدّ لازم','نمدّ الحرف ٦ حركات دائماً، مثل «الٓمٓ».'],
+  madda_obligatory:['#E53935','مدّ واجب','حرف مدّ بعده همزة في نفس الكلمة: نمدّه ٤ أو ٥ حركات، مثل «جَآءَ».'],
+  madda_permissible:['#F4511E','مدّ جائز','حرف مدّ في آخر الكلمة وبعده همزة في الكلمة التالية: يجوز مدّه.'],
+  madda_normal:['#D9822B','مدّ طبيعي','نمدّ الحرف حركتين فقط، مثل «قَالَ».'],
+  ghunnah:['#16A34A','غُنّة','صوت يخرج من الأنف مع النون والميم المشدّدتين، مثل «إِنَّ».'],
+  ikhfa:['#0E9F6E','إخفاء','نون ساكنة أو تنوين قبل حروف الإخفاء: ننطقها بين الإظهار والإدغام مع غنّة.'],
+  ikhfa_shafawi:['#0E9F6E','إخفاء شفوي','ميم ساكنة قبل الباء: نخفيها مع غنّة، مثل «تَرْمِيهِم بِحِجَارَةٍ».'],
+  idgham_ghunnah:['#15803D','إدغام بغنّة','نون ساكنة أو تنوين قبل (ي ن م و): ندخلها في الحرف التالي مع غنّة.'],
+  idgham_shafawi:['#15803D','إدغام شفوي','ميم ساكنة قبل ميم: ندغمهما مع غنّة.'],
+  iqlab:['#2E7D32','إقلاب','نون ساكنة أو تنوين قبل الباء: تنقلب ميماً مع غنّة، مثل «مِنۢ بَعْدِ».'],
+  idgham_wo_ghunnah:['#7F8C8D','إدغام بلا غنّة','نون ساكنة أو تنوين قبل اللام أو الراء: ندغمها بلا غنّة.'],
+  idgham_mutajanisayn:['#7F8C8D','إدغام متجانسين','حرفان مخرجهما واحد: ندغم الأول في الثاني.'],
+  idgham_mutaqaribayn:['#7F8C8D','إدغام متقاربين','حرفان مخرجهما قريب: ندغم الأول في الثاني.'],
+  qalaqah:['#1D6FD8','قلقلة','حروف «قطب جد» إذا سكنت: نهزّها هزّة خفيفة، مثل «أَحَدْ».'],
+  ham_wasl:['#9AA0A6','همزة وصل','تُكتب ولا تُنطق عند وصل الكلام.'],
+  laam_shamsiyah:['#9AA0A6','لام شمسية','لام «ال» تُكتب ولا تُنطق قبل الحروف الشمسية، مثل «ٱلشَّمْسِ».'],
+  slnt:['#9AA0A6','حرف لا يُنطق','حرف مكتوب لا يُقرأ.']
+};
+var tjCache={},tjPending={};
+function tjVerseWords(raw){
+  var toks=String(raw).replace(/<span class=["']?end["']?>[^<]*<\/span>/g,'').match(/<tajweed class=["']?[a-z_]+["']?>|<\/tajweed>|<[^>]*>|[^<]+/g)||[];
+  var words=[],cur='',stack=[];
+  function openAll(){stack.forEach(function(c){cur+=c?'<span class="tj tj-'+c+'">':'';});}
+  function closeAll(){for(var i=stack.length-1;i>=0;i--)if(stack[i])cur+='</span>';}
+  toks.forEach(function(t){
+    var m=/^<tajweed class=["']?([a-z_]+)["']?>$/.exec(t);
+    if(m){var c=TJ[m[1]]?m[1]:'';stack.push(c);if(c)cur+='<span class="tj tj-'+c+'">';return;}
+    if(t==='</tajweed>'){var c2=stack.pop();if(c2)cur+='</span>';return;}
+    if(t.charAt(0)==='<')return;
+    var parts=t.split(/\s+/);
+    parts.forEach(function(p,i){
+      if(i>0){closeAll();if(cur.replace(/<[^>]*>/g,'').length)words.push(cur);cur='';openAll();}
+      if(p)cur+=esc(p);
+    });
+  });
+  closeAll();if(cur.replace(/<[^>]*>/g,'').length)words.push(cur);
+  return words;
+}
+function ensureTajweed(s){
+  if(tjCache[s]||tjPending[s])return;tjPending[s]=true;
+  fetch('https://api.quran.com/api/v4/quran/verses/uthmani_tajweed?chapter_number='+s).then(function(r){if(!r.ok)throw 0;return r.json();}).then(function(j){
+    var m={};(j.verses||[]).forEach(function(v){var a=+String(v.verse_key).split(':')[1];m[a]=tjVerseWords(v.text_uthmani_tajweed||'');});
+    tjCache[s]=m;tjPending[s]=false;renderReader(true);
+  }).catch(function(){tjPending[s]=false;});
+}
+function tjOn(){return D.set.tajweed!==false;}
+function tjWordHtml(s,a,i,plain){
+  if(!tjOn()||!tjCache[s]||!tjCache[s][a])return esc(plain);
+  var W=tjCache[s][a],P=(textCache[s]||{})[a]||[];
+  return W.length===P.length&&W[i]?W[i]:esc(plain);
+}
+function tjLegendHtml(s){
+  if(!tjOn()||!tjCache[s])return '';
+  var used={};Object.keys(tjCache[s]).forEach(function(a){tjCache[s][a].forEach(function(w){var re=/tj-([a-z_]+)/g,m;while((m=re.exec(w)))used[m[1]]=1;});});
+  var keys=Object.keys(TJ).filter(function(k){return used[k];});
+  if(!keys.length)return '';
+  return '<div class="tjlegend">'+keys.map(function(k){return '<button class="tjchip" data-tj="'+k+'"><i style="background:'+TJ[k][0]+'"></i>'+TJ[k][1]+'</button>';}).join('')+'</div>';
+}
+function tjExplain(k){
+  var t=TJ[k];if(!t)return;var kid=K();kid.flags=kid.flags||{};if(!kid.flags.tj){kid.flags.tj=dkey();save();}
+  document.getElementById('cheerBox').innerHTML='<div class="em" style="font-size:54px">🎨</div><h2 style="color:'+t[0]+'">'+t[1]+'</h2><p style="font-size:19px;margin:0 0 16px">'+t[2]+'</p>'+
+    '<button class="pill" style="background:var(--sun);color:var(--ink)" data-close="cheerOv">فهمت ✔</button>';
+  document.getElementById('cheerOv').hidden=false;checkBadges();
+}
+
+/* ---------- 📖 meaning + story for kids ---------- */
+// a: what the surah is about · s: story (optional) · q: [question, [options], correctIndex]
+var KIDS_MEANING={
+1:{a:'أمّ الكتاب: نحمد الله ونثني عليه، ونطلب منه أن يهدينا الصراط المستقيم. نقرؤها في كل ركعة.'},
+114:{a:'نستعيذ بالله ربّ الناس ومَلِكهم وإلههم من وسوسة الشيطان.'},
+113:{a:'نستعيذ بالله من شرّ كل مخلوق، ومن ظلام الليل، ومن السحر، ومن الحاسد.'},
+112:{a:'الله واحد أحد، الصمد الذي يحتاجه كل شيء، لم يلد ولم يولد. وهي تعدل ثلث القرآن.'},
+111:{a:'أبو لهب وامرأته آذيا النبي ﷺ، فكان جزاؤهما النار.',s:'أبو لهب عمّ النبي ﷺ. لما صعد النبي ﷺ على جبل الصفا يدعو قومه إلى الإسلام، قال له أبو لهب كلاماً سيئاً، وكانت امرأته تؤذي النبي ﷺ، فنزلت هذه السورة.',q:['من هو أبو لهب؟',['عمّ النبي ﷺ','صاحب النبي ﷺ','ملك اليمن'],0]},
+110:{a:'بشارة بنصر الله وفتح مكة ودخول الناس في الإسلام أفواجاً، فنسبّح الله ونستغفره.'},
+109:{a:'المسلم يعبد الله وحده، ولا يعبد ما يعبده الكفار: لكم دينكم ولي دين.'},
+108:{a:'أعطى الله النبي ﷺ الكوثر، نهراً عظيماً في الجنة، فنصلّي لله ونذبح له شكراً.'},
+107:{a:'صفات سيئة نحذرها: إهانة اليتيم، وعدم إطعام المسكين، والتهاون في الصلاة، ومنع مساعدة الناس.'},
+106:{a:'نعمة الله على قريش: رحلة الشتاء إلى اليمن ورحلة الصيف إلى الشام، والطعام والأمن، فليعبدوا ربّ الكعبة.',q:['متى كانت رحلات قريش؟',['الشتاء والصيف','الربيع والخريف','كل يوم'],0]},
+105:{a:'قصة أصحاب الفيل الذين أرادوا هدم الكعبة فحماها الله.',s:'جاء أبرهة من اليمن بجيش كبير ومعه فيل ضخم ليهدم الكعبة. فأرسل الله عليهم طيوراً كثيرة (أبابيل) تحمل حجارة صغيرة من سجّيل، فهلك الجيش وحفظ الله بيته. ووُلد النبي ﷺ في ذلك العام: عام الفيل.',q:['ماذا أرسل الله على أصحاب الفيل؟',['طيراً أبابيل','ريحاً شديدة','مطراً غزيراً'],0]},
+104:{a:'ويلٌ لمن يعيب الناس ويغتابهم، ويجمع المال ويظن أنه يخلّده.'},
+103:{a:'كل الناس في خسارة إلا من آمن وعمل الصالحات وتواصى بالحق وتواصى بالصبر.',q:['من الذين لا يخسرون؟',['من آمن وعمل الصالحات','من جمع المال','من نام كثيراً'],0]},
+102:{a:'التفاخر بكثرة المال والأولاد يُلهي الناس عن الآخرة، وسنُسأل يوم القيامة عن النعيم.'},
+101:{a:'يوم القيامة يكون الناس كالفراش المنتشر، فمن ثقلت حسناته فهو في عيشة راضية.'},
+100:{a:'أقسم الله بالخيل المسرعة، والإنسان كثيراً ما يجحد نعم ربه ويحب المال حبّاً شديداً.'},
+99:{a:'يوم القيامة تهتز الأرض وتخرج ما فيها، ومن يعمل مثقال ذرة خيراً يره.',q:['من يعمل مثقال ذرة خيراً…',['يره','ينساه','يضيع'],0]},
+98:{a:'جاء النبي ﷺ بالبيّنة الواضحة، والذين آمنوا وعملوا الصالحات هم خير البرية.'},
+97:{a:'نزل القرآن في ليلة القدر، وهي خير من ألف شهر، تنزل فيها الملائكة بالسلام.',q:['ليلة القدر خير من…',['ألف شهر','سنة','شهر واحد'],0]},
+96:{a:'أول ما نزل من القرآن: «اقرأ»، فالعلم من نعم الله العظيمة.',s:'كان النبي ﷺ يتعبّد في غار حراء، فجاءه جبريل عليه السلام وقال له: اقرأ. فكانت هذه أول آيات نزلت من القرآن.',q:['أين نزلت أول آيات القرآن؟',['غار حراء','غار ثور','المدينة'],0]},
+95:{a:'أقسم الله بالتين والزيتون ومكة، وخلق الإنسان في أحسن صورة.'},
+94:{a:'شرح الله صدر النبي ﷺ ورفع ذكره، وإنّ مع العسر يسراً.',q:['ماذا يأتي مع العسر؟',['اليسر','الحزن','التعب'],0]},
+93:{a:'الله لم يترك نبيه ﷺ، وأوصاه ألا يقهر اليتيم ولا ينهر السائل، وأن يحدّث بنعمة ربه.'},
+92:{a:'من أعطى واتقى ييسّره الله للخير، ومن بخل ييسّره للعسرى.'},
+91:{a:'أفلح من زكّى نفسه وطهّرها، وخاب من أفسدها.',s:'طلب قوم ثمود من نبيهم صالح عليه السلام آية، فأخرج الله لهم ناقة عظيمة، وأمرهم صالح ألا يؤذوها. فعقروها فأهلكهم الله.',q:['ماذا فعل قوم ثمود بالناقة؟',['عقروها','اعتنوا بها','باعوها'],0]},
+90:{a:'خلق الله للإنسان عينين ولساناً وشفتين، والطريق الصعب للخير: إطعام اليتيم والمسكين.'},
+89:{a:'النفس المطمئنة يدعوها الله إلى جنته.',s:'تذكر السورة أقواماً طغوا: عاداً أصحاب البناء العالي، وثمود الذين نحتوا الصخر، وفرعون صاحب القوة، فعاقبهم الله.',q:['من الذي يدخل الجنة في آخر السورة؟',['النفس المطمئنة','النفس الغاضبة','النفس البخيلة'],0]},
+88:{a:'يوم القيامة وجوه متعبة في النار ووجوه ناعمة في الجنة، وانظروا إلى الإبل والسماء والجبال والأرض.'},
+87:{a:'نسبّح ربنا الأعلى، والآخرة خير وأبقى من الدنيا.'},
+86:{a:'على كل نفس ملك حافظ، والقرآن كلام فصلٌ حق.'},
+85:{a:'المؤمنون يصبرون على الأذى، ولهم جنات تجري من تحتها الأنهار.',s:'أصحاب الأخدود: ملك ظالم حفر حفرة كبيرة وأشعل فيها النار ليعذّب المؤمنين لأنهم آمنوا بالله، فصبروا وثبتوا على إيمانهم، ولهم الجنة.',q:['لماذا عذّب أصحاب الأخدود المؤمنين؟',['لأنهم آمنوا بالله','لأنهم سرقوا','لأنهم كذبوا'],0]},
+84:{a:'يوم القيامة تنشق السماء، ومن أوتي كتابه بيمينه يرجع إلى أهله مسروراً.'},
+83:{a:'ويلٌ للذين يغشّون في الكيل والميزان، والأبرار في نعيم.'},
+82:{a:'يوم القيامة، والملائكة الكرام الكاتبون يكتبون كل أعمالنا.'},
+81:{a:'أحوال يوم القيامة: تُكوَّر الشمس وتنكدر النجوم، والقرآن قول رسول كريم هو جبريل.'},
+80:{a:'كل الناس سواء في طلب العلم، والله يحب من يأتي ليتعلّم.',s:'كان النبي ﷺ يدعو كبار قريش إلى الإسلام، فجاءه عبد الله ابن أم مكتوم، وكان أعمى، يسأل ويتعلم، فعبس النبي ﷺ، فعاتبه الله، فصار النبي ﷺ يكرمه بعد ذلك.',q:['ماذا كان يريد ابن أم مكتوم؟',['أن يتعلّم','أن يأكل','أن يلعب'],0]},
+79:{a:'البعث يوم القيامة حق، وقصة موسى وفرعون.',s:'أرسل الله موسى عليه السلام إلى فرعون الطاغية، فكذّبه فرعون وقال: «أنا ربكم الأعلى»، فأهلكه الله.',q:['ماذا قال فرعون؟',['أنا ربكم الأعلى','أنا أحب موسى','أنا أؤمن بالله'],0]},
+78:{a:'الخبر العظيم يوم القيامة، ومن نعم الله: الأرض والجبال والنوم والليل والمطر.',q:['ما الذي جعله الله أوتاداً؟',['الجبال','الأشجار','البحار'],0]},
+77:{a:'يوم الفصل حق، وويلٌ يومئذ للمكذبين.'},
+76:{a:'الأبرار يطعمون الطعام للمسكين واليتيم والأسير لوجه الله، وجزاؤهم الجنة.'},
+75:{a:'الله قادر على أن يعيدنا بعد الموت، ولا تستعجل بالقرآن فالله يجمعه في صدرك.'},
+74:{a:'أمر الله النبي ﷺ أن يقوم فينذر الناس ويكبّر ربه.'},
+73:{a:'قيام الليل وترتيل القرآن ترتيلاً.'},
+72:{a:'الجن خلق من خلق الله، منهم المؤمنون ومنهم غير ذلك.',s:'استمع جماعة من الجن إلى النبي ﷺ يقرأ القرآن، فقالوا: «إنا سمعنا قرآناً عجباً يهدي إلى الرشد» فآمنوا.',q:['ماذا قال الجن عن القرآن؟',['قرآناً عجباً','كلاماً عادياً','شعراً'],0]},
+71:{a:'دعوة نوح عليه السلام قومه بالليل والنهار والاستغفار سبب للرزق والمطر.',s:'دعا نوح عليه السلام قومه مدة طويلة جداً ليعبدوا الله، فلم يؤمن إلا قليل، فأغرق الله الكافرين بالطوفان ونجّى المؤمنين في السفينة.',q:['كيف عاقب الله قوم نوح؟',['بالطوفان','بالريح','بالحجارة'],0]},
+70:{a:'الإنسان يجزع ويبخل إلا المصلّين الذين يحافظون على صلاتهم.'},
+69:{a:'يوم القيامة حقيقة، وما حدث لعاد وثمود وفرعون، ومن أوتي كتابه بيمينه يفرح.'},
+68:{a:'النبي ﷺ على خلق عظيم.',s:'أصحاب البستان: إخوة أرادوا قطف ثمار بستانهم في الصباح الباكر دون أن يعطوا المساكين شيئاً، فأرسل الله على البستان ما أهلكه في الليل، فندموا وتابوا إلى الله.',q:['لماذا هلك بستانهم؟',['لأنهم أرادوا منع المساكين','بسبب المطر','لأنهم ناموا'],0]},
+67:{a:'الله بيده الملك وخلق كل شيء بإتقان، وهي سورة تشفع لقارئها.'},
+66:{a:'نحمي أنفسنا وأهلنا من النار بطاعة الله، ومن القدوات الصالحة مريم وامرأة فرعون.'},
+65:{a:'من يتّق الله يجعل له مخرجاً ويرزقه من حيث لا يحتسب.'},
+64:{a:'يوم القيامة يوم التغابن، فاتقوا الله ما استطعتم.'},
+63:{a:'صفات المنافقين، ولا تُلهكم أموالكم ولا أولادكم عن ذكر الله.'},
+62:{a:'صلاة الجمعة: إذا نودي لها فاسعوا إلى ذكر الله واتركوا البيع.',q:['ماذا نفعل عند أذان الجمعة؟',['نسعى إلى الصلاة','نكمل اللعب','نذهب للسوق'],0]},
+61:{a:'الله يحب أن يتفق المؤمنون ويقولوا ما يفعلون، وعيسى عليه السلام بشّر بنبي اسمه أحمد.'},
+60:{a:'إبراهيم عليه السلام قدوة لنا، ونحسن إلى من لم يؤذنا.'},
+59:{a:'صفات المهاجرين والأنصار، وفي آخرها أسماء الله الحسنى.'},
+58:{a:'الله يسمع كل شيء، ومن آداب المجالس أن نفسح لغيرنا.',s:'جاءت امرأة اسمها خولة تشكو زوجها إلى النبي ﷺ، فسمع الله شكواها من فوق سبع سماوات وأنزل حكمه.',q:['من سمع شكوى المرأة؟',['الله سبحانه','لا أحد','جيرانها'],0]},
+57:{a:'الله الأول والآخر، وأنزل الحديد فيه قوة ومنافع للناس، والإنفاق في سبيل الله.'},
+56:{a:'يوم القيامة الناس ثلاثة أصناف: السابقون، وأصحاب اليمين، وأصحاب الشمال.'},
+55:{a:'نعم الله الكثيرة: الشمس والقمر والبحار والجنة، «فبأيّ آلاء ربكما تكذبان».',q:['ما الآية التي تتكرر في السورة؟',['فبأي آلاء ربكما تكذبان','الحمد لله','إنا أعطيناك'],0]},
+54:{a:'«ولقد يسّرنا القرآن للذكر فهل من مدّكر»، مع قصص الأمم السابقة.',s:'انشقّ القمر معجزةً للنبي ﷺ ورآه الناس، وتذكر السورة قصص نوح وعاد وثمود ولوط وفرعون.',q:['ما المعجزة في أول السورة؟',['انشقاق القمر','شقّ البحر','الطوفان'],0]},
+53:{a:'رحلة المعراج ورؤية النبي ﷺ لجبريل، وليس للإنسان إلا ما سعى.'},
+52:{a:'نعيم المتقين في الجنة، يجمع الله المؤمنين بذريتهم.'},
+51:{a:'«وما خلقت الجن والإنس إلا ليعبدون».',s:'جاءت الملائكة إلى إبراهيم عليه السلام على هيئة ضيوف، فأكرمهم بعجل سمين، وبشّروه بغلام عليم.',q:['بماذا أكرم إبراهيم ضيوفه؟',['بعجل سمين','بالتمر','بالماء'],0]},
+50:{a:'البعث بعد الموت حق، وملكان يكتبان كل كلمة نقولها.',q:['من يكتب أقوالنا؟',['ملكان رقيب وعتيد','لا أحد','أصدقاؤنا'],0]},
+49:{a:'آداب المسلم: نتأكد من الأخبار، ولا نسخر من الناس، ولا نغتاب، والمؤمنون إخوة.',q:['ماذا نفعل إذا جاءنا خبر؟',['نتأكد منه','ننشره فوراً','نضحك'],0]},
+48:{a:'صلح الحديبية كان فتحاً مبيناً، وبيعة الرضوان تحت الشجرة.'},
+47:{a:'من نصر الله نصره، وفي الجنة أنهار من ماء ولبن وعسل.'},
+46:{a:'الإحسان إلى الوالدين، وقصة قوم عاد.',s:'أنذر هود عليه السلام قومه عاداً، فرأوا سحاباً قادماً فظنّوه مطراً، فكان ريحاً شديدة أهلكتهم.',q:['ماذا ظنّ قوم عاد السحاب؟',['مطراً','دخاناً','طيوراً'],0]},
+45:{a:'آيات الله في السماوات والأرض، ويوم القيامة تكون كل أمة جاثية.'},
+44:{a:'نزل القرآن في ليلة مباركة، وقصة موسى وفرعون.'},
+43:{a:'لا نغترّ بزينة الدنيا، وقصص إبراهيم وموسى وعيسى عليهم السلام.'},
+42:{a:'أمر المؤمنين شورى بينهم، والعفو والصبر من أفضل الأخلاق.'},
+41:{a:'القرآن كتاب فُصّلت آياته، ونردّ السيئة بالتي هي أحسن.'},
+40:{a:'الله غافر الذنب وقابل التوب.',s:'رجل مؤمن من قوم فرعون كان يكتم إيمانه، دافع عن موسى عليه السلام ونصح قومه بحكمة، فحفظه الله من مكرهم.',q:['ماذا فعل مؤمن آل فرعون؟',['دافع عن موسى ونصح قومه','ساعد فرعون','هرب من البلد'],0]},
+39:{a:'لا تقنطوا من رحمة الله، فالله يغفر الذنوب جميعاً لمن تاب.'},
+38:{a:'قصص داود وسليمان وأيوب عليهم السلام.',s:'صبر أيوب عليه السلام على المرض سنوات طويلة ولم يشتكِ إلا إلى الله، فشفاه الله وأعاد إليه أهله.',q:['بماذا اشتهر أيوب عليه السلام؟',['الصبر','السرعة','الغنى'],0]},
+37:{a:'قصص الأنبياء: نوح وإبراهيم ويونس عليهم السلام.',s:'رأى إبراهيم عليه السلام في المنام أنه يذبح ابنه إسماعيل، فاستسلما لأمر الله، ففداه الله بذبح عظيم. ومن هنا جاءت الأضحية في عيد الأضحى.',q:['بماذا فدى الله إسماعيل؟',['بذبح عظيم','بمال كثير','بطعام'],0]},
+36:{a:'قلب القرآن: البعث بعد الموت، وآيات الله في الشمس والقمر والسفن.',s:'أصحاب القرية: أرسل الله إليهم رسلاً فكذّبوهم، فجاء رجل من أقصى المدينة يسعى وقال: «يا قوم اتبعوا المرسلين».',q:['من جاء من أقصى المدينة؟',['رجل يسعى','ملك عظيم','طفل صغير'],0]}
+};
+var mufCache={},mufPending={};
+function loadMuyassar(s,page,acc){
+  acc=acc||{};page=page||1;
+  return fetch('https://api.quran.com/api/v4/tafsirs/16/by_chapter/'+s+'?per_page=50&page='+page).then(function(r){if(!r.ok)throw 0;return r.json();}).then(function(j){
+    (j.tafsirs||[]).forEach(function(t){acc[+String(t.verse_key).split(':')[1]]=String(t.text||'').replace(/<[^>]*>/g,'');});
+    var nx=j.pagination&&j.pagination.next_page;return nx?loadMuyassar(s,nx,acc):acc;
+  });
+}
+var MEAN={n:null,ans:null};
+function openMeaning(n){
+  MEAN={n:n,ans:null};drawMeaning();document.getElementById('meanOv').hidden=false;
+  var k=K();if(!k.meant[n]){k.meant[n]=dkey();addPts(k,5,'معنى سورة '+SURAHS[n][0]);save();checkBadges();}
+  ensureText(n);
+  if(!mufCache[n]&&!mufPending[n]){mufPending[n]=true;loadMuyassar(n).then(function(m){mufCache[n]=m;mufPending[n]=false;if(MEAN.n===n)drawMeaning();},function(){mufPending[n]=false;mufCache[n]=null;if(MEAN.n===n)drawMeaning(true);});}
+}
+function drawMeaning(failed){
+  var n=MEAN.n,M=KIDS_MEANING[n]||{},k=K(),T=textCache[n]||{},F=mufCache[n];
+  var h='<div class="row" style="justify-content:space-between"><h2 style="margin:0">📖 سورة '+SURAHS[n][0]+'</h2><button class="btn alt" data-close="meanOv">✕</button></div>';
+  if(M.a)h+='<div class="mbox"><b>💡 عن ماذا تتحدث السورة؟</b><p>'+M.a+'</p></div>';
+  if(M.s)h+='<div class="mbox story"><b>📜 القصة</b><p>'+M.s+'</p></div>';
+  if(M.q){var q=M.q;h+='<div class="mbox quizq"><b>❓ سؤال سريع: '+q[0]+'</b><div class="qopts" style="margin-top:8px">'+q[1].map(function(o,i){
+      var cls='qopt';if(MEAN.ans!=null){if(i===q[2])cls+=' ok';else if(i===MEAN.ans)cls+=' no';}
+      return '<button class="'+cls+'" data-mans="'+i+'"'+(MEAN.ans!=null?' disabled':'')+'>'+o+'</button>';}).join('')+'</div>'+
+      (MEAN.ans!=null?'<p style="font-weight:800;margin:8px 0 0">'+(MEAN.ans===q[2]?'✅ أحسنت!':'💡 الجواب الصحيح باللون الأخضر')+'</p>':'')+'</div>';}
+  h+='<div class="mbox"><b>📘 معنى الآيات (التفسير الميسر)</b>';
+  if(F){for(var a=1;a<=SURAHS[n][1];a++)h+='<div class="mayah">'+(T[a]?'<div class="qtext" style="font-size:22px;line-height:1.9">'+esc(T[a].join(' '))+' <span class="anum">'+ar(a)+'</span></div>':'<b>الآية '+ar(a)+'</b>')+'<p>'+esc(F[a]||'')+'</p></div>';}
+  else h+='<p>'+(failed||mufCache[n]===null?'تعذّر تحميل التفسير — تأكد من الإنترنت.':'⏳ جارٍ التحميل…')+'</p>';
+  h+='</div><div class="row" style="justify-content:center;margin-top:10px"><button class="pill" style="background:var(--sun);color:var(--ink)" data-close="meanOv">'+(k.prog[n]?'رجوع':'هيا نحفظها! 🌱')+'</button></div>';
+  document.getElementById('meanBox').innerHTML=h;
+}
+
+/* ---------- 🏅 badges ---------- */
+var BADGES=[
+ ['listen1','🎧','أول آية','استمعت إلى أول آية',function(k,s){return [k.total,1];}],
+ ['listen100','🎶','١٠٠ آية','استمعت إلى ١٠٠ آية',function(k,s){return [k.total,100];}],
+ ['listen1000','🎼','١٠٠٠ آية','استمعت إلى ١٠٠٠ آية',function(k,s){return [k.total,1000];}],
+ ['flower1','🌸','أول زهرة','حفظت أول سورة',function(k,s){return [s.flowers,1];}],
+ ['fatiha','🕋','أمّ الكتاب','حفظت سورة الفاتحة',function(k,s){return [k.prog[1]===3?1:0,1];}],
+ ['flower5','💐','باقة زهور','حفظت ٥ سور',function(k,s){return [s.flowers,5];}],
+ ['flower10','🌻','بستاني صغير','حفظت ١٠ سور',function(k,s){return [s.flowers,10];}],
+ ['flower20','🌳','حديقة كبيرة','حفظت ٢٠ سورة',function(k,s){return [s.flowers,20];}],
+ ['juz30','⭐','جزء عمّ','أكملت جزء عمّ',function(k,s){return [zoneDoneCount(k,1),ZONES[1].nums.length];}],
+ ['juz29','🌟','جزء تبارك','أكملت جزء تبارك',function(k,s){return [zoneDoneCount(k,2),ZONES[2].nums.length];}],
+ ['juz28','✨','جزء قد سمع','أكملت جزء قد سمع',function(k,s){return [zoneDoneCount(k,3),ZONES[3].nums.length];}],
+ ['yasin','🏆','وصلت إلى يس','حفظت كل السور حتى يس',function(k,s){return [s.flowers,ORDER.length];}],
+ ['streak3','🔥','٣ أيام','استمعت ٣ أيام متتالية',function(k,s){return [s.streak,3];}],
+ ['streak7','🔥','أسبوع كامل','استمعت ٧ أيام متتالية',function(k,s){return [s.streak,7];}],
+ ['streak30','💎','شهر كامل','استمعت ٣٠ يوماً متتالياً',function(k,s){return [s.streak,30];}],
+ ['quiz1','📝','أول اختبار','نجحت في اختبار بستان',function(k,s){return [Object.keys(k.quiz).filter(function(z){return k.quiz[z]>=7;}).length,1];}],
+ ['quiz10','🎯','العلامة الكاملة','حصلت على ١٠/١٠ في اختبار',function(k,s){return [Object.keys(k.quiz).filter(function(z){return k.quiz[z]>=10;}).length,1];}],
+ ['review10','🔁','مراجع نشيط','راجعت ١٠ مرات',function(k,s){return [k.revCount||0,10];}],
+ ['meaning5','📖','أفهم ما أحفظ','قرأت معنى ٥ سور',function(k,s){return [Object.keys(k.meant).length,5];}],
+ ['story10','📜','حكواتي','قرأت معنى ١٥ سورة',function(k,s){return [Object.keys(k.meant).length,15];}],
+ ['tajweed','🎨','عالم التجويد','تعرّفت على حكم تجويد',function(k,s){return [k.flags&&k.flags.tj?1:0,1];}],
+ ['recorder','🎙️','قارئ صغير','أرسلت أول تسميع',function(k,s){return [Object.keys(k.recs).length,1];}],
+ ['game','🎮','بطل الجري','قطعت مسافة ١٠٠٠ في اللعبة',function(k,s){return [k.gameBest||0,1000];}]
+];
+function zoneDoneCount(k,zi){return ZONES[zi].nums.filter(function(n){return k.prog[n]===3;}).length;}
+function badgeState(k){var s=kidSummary(k);return BADGES.map(function(b){var v=b[4](k,s),got=v[0]>=v[1];return {id:b[0],ic:b[1],t:b[2],d:b[3],cur:Math.min(v[0],v[1]),need:v[1],got:got,at:k.badges[b[0]]};});}
+var badgeChecking=false;
+function checkBadges(){
+  if(badgeChecking)return;badgeChecking=true;
+  try{
+    D.kids.forEach(function(k,i){
+      var first=!k.badgesInit,newOnes=[];
+      badgeState(k).forEach(function(b){if(b.got&&!k.badges[b.id]){k.badges[b.id]=dkey();newOnes.push(b);}});
+      if(first){k.badgesInit=1;newOnes=[];}
+      if(newOnes.length){save();if(i===D.kid&&document.getElementById('cheerOv').hidden){var b=newOnes[0];
+        setTimeout(function(){cheer(b.ic,'🏅 وسام جديد: '+b.t,b.d+'. ما شاء الله يا '+esc(k.name)+'!'+(newOnes.length>1?' (و'+ar(newOnes.length-1)+' أوسمة أخرى)':''));},400);}}
+      else if(first)save();
+    });
+  }finally{badgeChecking=false;}
+}
+function openBadges(){
+  var k=K(),st=badgeState(k),got=st.filter(function(b){return b.got;}).length;
+  document.getElementById('badgeBox').innerHTML='<div class="row" style="justify-content:space-between"><h2 style="margin:0">🏅 أوسمة '+esc(k.name)+'</h2><button class="btn alt" data-close="badgeOv">✕</button></div>'+
+    '<p style="font-size:18px;margin:6px 0 12px">جمعت <b>'+ar(got)+'</b> من '+ar(st.length)+' وسام</p>'+
+    '<div class="badgegrid">'+st.map(function(b){return '<div class="badge2'+(b.got?' got':'')+'"><div class="bic">'+(b.got?b.ic:'🔒')+'</div><b>'+b.t+'</b><small>'+b.d+'</small>'+
+      (b.got?'<span class="bdate">'+(b.at||'')+'</span>':'<span class="bprog"><i style="width:'+Math.round(b.cur*100/b.need)+'%"></i></span><small>'+ar(b.cur)+' / '+ar(b.need)+'</small>')+'</div>';}).join('')+'</div>';
+  document.getElementById('badgeOv').hidden=false;
+}
+
 function raceHtml(){
   var k=K(),s=kidSummary(k),plan=k.plan,p=k.prog,curN=null,curIdx=plan;
   for(var i=0;i<plan;i++){if((p[ORDER[i]]||0)<3){curN=ORDER[i];curIdx=i;break;}}
@@ -1332,7 +1607,7 @@ function renderGarden(){
 function render(){renderKids();renderStats();renderGarden();renderPlayer();
   var pr=pendingRecs(),pb=document.getElementById('openParent');
   if(pb)pb.lastChild.textContent='لوحة الوالدين'+(pr?' · 🎙️ '+ar(pr):'');
-  applyTheme();}
+  applyTheme();setTimeout(checkBadges,0);}
 /* ---------- themes (one per child; switches when the child is picked) ---------- */
 var THEMES=[['garden','🌳','الحديقة','#5DB36A','#9BD8F5'],['sea','🌊','البحر','#3BA7C9','#7FD0F0'],['desert','🌅','الغروب','#E8914A','#FFC59E'],
   ['space','🚀','الفضاء','#9C7BE0','#B9A6F2'],['rose','🌷','الورود','#E679A6','#FFC1D8']];
@@ -1370,6 +1645,8 @@ function growLine(n,stage){
     'سمعت كل آية <b>'+ar(m)+'</b> مرة · لتصير «'+LABELS[stage<1?1:stage<2?2:3].split(' —')[0]+'» اسمع كل آية '+ar(next)+' مرات'+(weak&&weak<SURAHS[n][1]?' (بقي '+ar(weak)+' آيات)':'');
   return '<div class="wrap growline">'+plantSvg(stage,n,44)+'<div style="flex:1;min-width:200px"><div style="font-size:16px">'+msg+'</div><div class="bar"><div style="width:'+pct+'%"></div></div></div>'+
     '<div class="row">'+
+    '<button class="pill" style="background:#fff;color:var(--green);border:3px solid var(--green)" data-meaning="'+n+'">📖 المعنى</button>'+
+    '<button class="pill" style="background:'+(tjOn()?'var(--green)':'#fff')+';color:'+(tjOn()?'#fff':'var(--green)')+';border:3px solid var(--green)" data-tjtoggle aria-pressed="'+tjOn()+'">🎨 تجويد</button>'+
     '<button class="pill" style="background:'+(S.hide?'#8E6BD8':'#fff')+';color:'+(S.hide?'#fff':'#4B2E9B')+';border:3px solid #8E6BD8" data-act="hide" aria-pressed="'+!!S.hide+'">'+(S.hide?'👁️ أظهر النص':'🙈 اختبر نفسك')+'</button>'+
     (k.ready[n]&&stage<3?
       (k.recs[n]&&k.recs[n].status==='pending'?'<span class="pill" style="background:#F2ECFF;color:#4B2E9B">🎙️ تسجيلك عند والديك</span>':'<button class="pill" style="background:#E4572E;color:#fff" data-rec="'+n+'">🎙️ سجّل تسميعك</button>')+
@@ -1456,6 +1733,7 @@ function renderParent(){
       '</div></div>'+
       '<div class="box"><h3>الأهداف والتحفيز</h3><div class="kgrid">'+num('goal','هدف اليوم (عدد الآيات المسموعة)',R.goal,1,500,'يحتفل الطفل عند تحقيق الهدف')+'</div>'+
       '<label class="field" style="margin:6px 0 10px"><span>عند الضغط على السورة تفتح في وضع</span><select data-set="mode"><option value="read"'+(R.mode!=='memo'?' selected':'')+'>📖 قراءة مع الشيخ (بدون تكرار)</option><option value="memo"'+(R.mode==='memo'?' selected':'')+'>🔁 حفظ وتكرار</option></select><span class="note">الطفل يستطيع التبديل بين الوضعين في أي وقت.</span></label>'+
+      '<label class="switch"><span>🎨 ألوان التجويد في نص السورة</span><input type="checkbox" data-set="tajweed"'+(R.tajweed!==false?' checked':'')+'></label>'+
       '<label class="switch"><span>🏞️ صورة طبيعة جديدة كل يوم خلف رحلة الطفل</span><input type="checkbox" data-set="natureBg"'+(R.natureBg!==false?' checked':'')+'></label>'+
       '<label class="switch"><span>أصوات الاحتفال والمؤثرات</span><input type="checkbox" data-set="sfx"'+(R.sfx?' checked':'')+'></label>'+
       '<label class="switch"><span>الزهرة تحتاج تسميعاً أمام الوالدين</span><input type="checkbox" data-set="approve"'+(R.approve?' checked':'')+'></label>'+
@@ -1562,6 +1840,11 @@ document.addEventListener('click',function(e){
   var b=e.target.closest('button');if(!b)return;var ds=b.dataset;
   if(ds.close){document.getElementById(ds.close).hidden=true;if(ds.close==='parentOv')render();return;}
   if(ds.update!=null){updStart();return;}
+  if(ds.meaning){openMeaning(+ds.meaning);return;}
+  if(ds.mans!=null&&MEAN.ans==null){var mq=(KIDS_MEANING[MEAN.n]||{}).q;MEAN.ans=+ds.mans;if(mq&&MEAN.ans===mq[2]){chime([659,880]);var mk=K();mk.flags=mk.flags||{};var fk='mq'+MEAN.n;if(!mk.flags[fk]){mk.flags[fk]=1;addPts(mk,5,'سؤال سورة '+SURAHS[MEAN.n][0]);save();toast('+٥ نقاط ⭐');}}else chime([330,262]);drawMeaning();return;}
+  if(ds.tjtoggle!=null){D.set.tajweed=!tjOn();save();renderPlayer();renderReader(true);return;}
+  if(ds.tj){tjExplain(ds.tj);return;}
+  if(ds.badges!=null){checkBadges();openBadges();return;}
   if(ds.updcheck!=null){b.disabled=true;b.textContent='جارٍ التحقق…';updCheck(true).then(function(){toast(updAvailable()?'🎁 يوجد تحديث جديد':'✅ لديك أحدث إصدار');renderParent();});return;}
   if(ds.embedcreate!=null){createFamily(EMBED,b);return;}
   if(ds.copycode!=null){copyText(fmtCode(SYNC.code));return;}
@@ -1674,7 +1957,7 @@ document.addEventListener('click',function(e){
 });
 document.addEventListener('keydown',function(e){
   if(e.key==='Escape'){
-    var open=['cheerOv','gateOv','recOv','quizOv','parentOv'].filter(function(id){return !document.getElementById(id).hidden;});
+    var open=['cheerOv','gateOv','recOv','quizOv','meanOv','badgeOv','parentOv'].filter(function(id){return !document.getElementById(id).hidden;});
     if(open.length)document.getElementById(open[0]).hidden=true;else if(S.sel)closeSurah();
   }
   if((e.key==='Enter'||e.key===' ')&&e.target.classList&&e.target.classList.contains('ay')){e.preventDefault();var v=e.target.dataset.ay;if(v&&v!=='b')playFromAyah(+v);}
@@ -1894,7 +2177,7 @@ render();
 window.qgBack=function(){
   if(G){closeGame();return true;}
   if(!document.getElementById('recOv').hidden){recCancel();return true;}
-  var ids=['cheerOv','gateOv','quizOv','welcomeOv','parentOv'];
+  var ids=['cheerOv','gateOv','quizOv','meanOv','badgeOv','welcomeOv','parentOv'];
   for(var i=0;i<ids.length;i++){var el=document.getElementById(ids[i]);if(!el.hidden){el.hidden=true;if(ids[i]==='parentOv')render();return true;}}
   if(S.sel){closeSurah();return true;}
   return false;
