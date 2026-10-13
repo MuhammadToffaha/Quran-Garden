@@ -276,6 +276,14 @@ footer{text-align:center;font-size:16px}
 .cheer .em{font-size:84px;line-height:1;animation:pop .7s cubic-bezier(.3,1.6,.5,1)}
 .cheer h2{font-size:34px;margin:10px 0 4px}
 
+/* ---------- smaller text everywhere ---------- */
+html{zoom:.88;background:var(--sand)}
+@media (max-width:600px){html{zoom:.85}}
+/* ---------- full-page reading while the Sheikh recites ---------- */
+#player.immersive #shead,#player.immersive #pctrl{display:none}
+#player.immersive #reader{padding-top:28px}
+.imbtn{display:none;position:absolute;top:12px;left:12px;z-index:3;width:48px;height:48px;border-radius:50%;border:0;background:rgba(31,58,46,.55);color:#fff;align-items:center;justify-content:center}
+#player.immersive .imbtn{display:flex}
 /* ---------- themes ---------- */
 body[data-theme="sea"]{--ink:#12324A;--green:#0F6E8C;--leaf:#3BA7C9;--sun:#FFB547;--sand:#F0F9FF;--deep:#0B3D5C;--sky:#7FD0F0;--sky2:#E3F6FF;--sky3:#9CCFE4;--bed:#DDF2FA;--soft:#FFF4DA;--line:#BFD9E6;--leaf2:#8CC9DF;--leaf-d:#2E8FB0;--wood:#2F8FB0;--wood2:#1D6A85;--paper:#FAFDFF;--green-d:#0B4F66;--berry:#B03A6F}
 body[data-theme="desert"]{--ink:#4A2A14;--green:#B5541C;--leaf:#E8914A;--sun:#FFC93C;--sand:#FFF5E8;--deep:#7A3510;--sky:#FFC59E;--sky2:#FFEBD6;--sky3:#F2BE95;--bed:#FBE7D2;--soft:#FFF1D0;--line:#EBCFAE;--leaf2:#F0B07A;--leaf-d:#C9743A;--wood:#A0522D;--wood2:#6E3517;--paper:#FFFBF5;--green-d:#7F3912;--berry:#9C2F5E}
@@ -396,7 +404,7 @@ body{transition:background .4s}
 </header>
 
 <main class="wrap" id="main"></main>
-<section id="player" role="dialog" aria-modal="true" aria-label="قراءة السورة" hidden><div id="shead"></div><div id="reader" aria-live="off"></div><div id="pctrl"></div></section>
+<section id="player" role="dialog" aria-modal="true" aria-label="قراءة السورة" hidden><div id="shead"></div><div id="reader" aria-live="off"></div><div id="pctrl"></div><button class="imbtn" data-act="toggle" aria-label="إيقاف مؤقت وإظهار الأزرار"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4" width="5" height="16" rx="1.5" fill="currentColor"/><rect x="14" y="4" width="5" height="16" rx="1.5" fill="currentColor"/></svg></button></section>
 <audio id="audio" preload="auto"></audio>
 
 <div class="overlay" id="gateOv" hidden style="z-index:55"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="gateT" id="gateBox"></div></div>
@@ -1247,6 +1255,7 @@ function growLine(n,stage){
 function renderPlayer(){
   var el=document.getElementById('player');
   keepAwake(!!(S.sel&&S.playing));
+  el.classList.toggle('immersive',!!(S.sel&&S.playing&&S.started&&!S.hide));
   if(!S.sel){el.hidden=true;return;}
   el.hidden=false;var st,R=D.set,memo=S.mode==='memo',n=S.sel,stage=K().prog[n]||0,total=SURAHS[n][1];
   if(S.err)st='تعذّر التشغيل — تأكد من الاتصال بالإنترنت';
@@ -1421,6 +1430,7 @@ document.addEventListener('change',function(e){
 /* ---------- clicks ---------- */
 document.addEventListener('click',function(e){
   var ay=e.target.closest('#reader .ay');
+  if(ay&&S.playing&&!S.hide){stop();S.playing=false;renderPlayer();return;}
   if(ay){var av=ay.dataset.ay;if(S.hide){ay.classList.toggle('shown');return;}if(av&&av!=='b')playFromAyah(+av);return;}
   var b=e.target.closest('button');if(!b)return;var ds=b.dataset;
   if(ds.close){document.getElementById(ds.close).hidden=true;if(ds.close==='parentOv')render();return;}
