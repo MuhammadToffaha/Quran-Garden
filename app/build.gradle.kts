@@ -17,12 +17,21 @@ android {
         versionName = "1.$run"
     }
 
+    // One fixed signing key for every build. Android only installs an update over the
+    // existing app when both APKs are signed with the same key.
+    signingConfigs {
+        create("family") {
+            storeFile = rootProject.file("keystore/quran-garden.jks")
+            storePassword = System.getenv("QG_STORE_PASSWORD") ?: "qurangarden"
+            keyAlias = "qurangarden"
+            keyPassword = System.getenv("QG_KEY_PASSWORD") ?: "qurangarden"
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
-            // Family app installed by hand: sign with the debug key so the APK installs directly.
-            // For Google Play, replace this with your own release keystore.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("family")
         }
     }
 

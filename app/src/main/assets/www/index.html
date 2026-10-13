@@ -147,6 +147,8 @@ footer{text-align:center;font-size:16px}
 .recbtn{width:96px;height:96px;border-radius:50%;border:6px solid #fff;background:#E4572E;color:#fff;font-size:40px;box-shadow:0 0 0 4px #E4572E}
 .recdot{width:22px;height:22px;border-radius:50%;background:#E4572E;animation:pulse 1s infinite;margin:6px auto}
 .recitem{border-top:2px solid #EFE6D4;padding:10px 0}
+.updbanner{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;background:var(--soft);border:3px solid var(--sun);border-radius:20px;padding:12px 16px;font-size:18px}
+.updst{font-size:15px;margin-top:4px}
 .famcode{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:28px;font-weight:800;letter-spacing:2px;text-align:center;background:var(--soft);border:3px dashed #E0A915;border-radius:16px;padding:10px;user-select:all}
 .rules{direction:ltr;text-align:left;background:var(--ink);color:#DDF3D3;border-radius:14px;padding:12px;font-size:14px;overflow-x:auto}
 #dbUrl,#joinLinkIn{direction:ltr;text-align:left;font-size:15px}
@@ -1192,7 +1194,7 @@ function renderGarden(){
       '<div class="bed"><div class="grid">'+tiles+'</div></div></section>';
   }).join('');
   setTimeout(scrollStations,0);
-  document.getElementById('main').innerHTML=raceHtml()+legend+zones+
+  document.getElementById('main').innerHTML=updBannerHtml()+raceHtml()+legend+zones+
     '<footer>التلاوة: الشيخ مشاري راشد العفاسي، آية بآية · يُحفظ كل شيء على هذا الجهاز</footer>';
 }
 function render(){renderKids();renderStats();renderGarden();renderPlayer();
@@ -1385,7 +1387,8 @@ function renderParent(){
   }
   if(PT==='backup'){
     body='<div class="box"><h3>تصدير</h3><p class="note">احفظ ملفاً بكل التقدّم والإعدادات، أو انقله لجهاز آخر.</p><button class="btn" data-export>تنزيل نسخة احتياطية</button></div>'+
-      '<div class="box"><h3>استيراد</h3><p class="note">سيستبدل كل البيانات الحالية على هذا الجهاز.</p><button class="btn alt" data-import>اختيار ملف…</button></div>';
+      '<div class="box"><h3>استيراد</h3><p class="note">سيستبدل كل البيانات الحالية على هذا الجهاز.</p><button class="btn alt" data-import>اختيار ملف…</button></div>'+
+      updateBoxHtml();
   }
   document.getElementById('parentBox').innerHTML='<div class="ptop"><h2 id="parentT">لوحة الوالدين</h2><button class="ghost" data-close="parentOv">إغلاق ✕</button></div>'+
     '<div class="tabs" role="tablist">'+tabs.map(function(t){return '<button role="tab" aria-selected="'+(PT===t[0])+'" class="'+(PT===t[0]?'on':'')+'" data-ptab="'+t[0]+'">'+t[1]+'</button>';}).join('')+'</div>'+
@@ -1421,6 +1424,8 @@ document.addEventListener('click',function(e){
   if(ay){var av=ay.dataset.ay;if(S.hide){ay.classList.toggle('shown');return;}if(av&&av!=='b')playFromAyah(+av);return;}
   var b=e.target.closest('button');if(!b)return;var ds=b.dataset;
   if(ds.close){document.getElementById(ds.close).hidden=true;if(ds.close==='parentOv')render();return;}
+  if(ds.update!=null){updStart();return;}
+  if(ds.updcheck!=null){b.disabled=true;b.textContent='جارٍ التحقق…';updCheck(true).then(function(){toast(updAvailable()?'🎁 يوجد تحديث جديد':'✅ لديك أحدث إصدار');renderParent();});return;}
   if(ds.embedcreate!=null){createFamily(EMBED,b);return;}
   if(ds.copycode!=null){copyText(fmtCode(SYNC.code));return;}
   if(ds.joincode!=null){var cin=document.getElementById(ds.joincode==='w'?'wCode':'famCodeIn'),cc=cleanCode(cin&&cin.value);
@@ -1683,6 +1688,62 @@ function copyText(t){try{navigator.clipboard.writeText(t).then(function(){toast(
 })();
 if(SYNC.on){syncPull().then(function(){syncPush();syncListen();});}
 document.addEventListener('visibilitychange',function(){if(!document.hidden&&SYNC.on)syncPull();});
+
+/* ---------- in-app update (Android app only): newest GitHub release → download → install ---------- */
+var UPD_REPO='MuhammadToffaha/Quran-Garden';
+var UPD={cur:0,latest:0,url:'',notes:'',state:'',pct:0,checked:0,err:''};
+function isAndroidApp(){try{return !!(window.AndroidBridge&&AndroidBridge.versionCode);}catch(e){return false;}}
+function updCheck(force){
+  if(!isAndroidApp())return Promise.resolve();
+  try{UPD.cur=AndroidBridge.versionCode();}catch(e){}
+  var cache=null;try{cache=JSON.parse(localStorage.getItem('qg-upd')||'null');}catch(e){}
+  if(!force&&cache&&Date.now()-cache.t<6*3600e3){Object.assign(UPD,{latest:cache.n,url:cache.u,notes:cache.m,checked:cache.t});updRefresh();return Promise.resolve();}
+  return fetch('https://api.github.com/repos/'+UPD_REPO+'/releases/latest',{headers:{Accept:'application/vnd.github+json'}})
+    .then(function(r){if(!r.ok)throw r.status;return r.json();})
+    .then(function(j){
+      var m=/^v?\d+\.(\d+)$/.exec(j.tag_name||''),a=(j.assets||[]).filter(function(x){return /\.apk$/i.test(x.name);})[0];
+      UPD.latest=m?+m[1]:0;UPD.url=a?a.browser_download_url:'';UPD.notes=j.name||'';UPD.checked=Date.now();UPD.err='';
+      try{localStorage.setItem('qg-upd',JSON.stringify({n:UPD.latest,u:UPD.url,m:UPD.notes,t:UPD.checked}));}catch(e){}
+      updRefresh();
+    }).catch(function(e){UPD.err='تعذّر التحقق من التحديثات ('+e+')';updRefresh();});
+}
+function updAvailable(){return isAndroidApp()&&UPD.latest>UPD.cur&&!!UPD.url;}
+function updStatusText(){
+  if(UPD.state==='progress')return '⬇️ جارٍ التنزيل… '+ar(UPD.pct)+'٪';
+  if(UPD.state==='ready')return '📦 اضغط «تثبيت» في نافذة أندرويد';
+  if(UPD.state==='permission')return '🔓 اسمح لـ«حديقة القرآن» بتثبيت التطبيقات، ثم ارجع واضغط «تحديث» مرة أخرى';
+  if(UPD.state==='error')return '⚠️ تعذّر التحديث — تأكد من الإنترنت وحاول مرة أخرى';
+  return '';
+}
+function updBannerHtml(){
+  if(!updAvailable())return '';
+  var st=updStatusText();
+  return '<section class="updbanner" role="status"><div><b>🎁 تحديث جديد متوفر!</b> <span dir="ltr">v1.'+UPD.latest+'</span>'+
+    (st?'<div class="updst">'+st+'</div>':'')+'</div>'+
+    (UPD.state==='progress'?'':'<button class="pill" style="background:var(--sun);color:var(--ink)" data-update>⬇️ تحديث الآن</button>')+'</section>';
+}
+function updateBoxHtml(){
+  if(!isAndroidApp())return '<div class="box"><h3>🔄 التحديثات</h3><p class="note">التحديث من داخل التطبيق متاح في تطبيق أندرويد فقط.</p></div>';
+  return '<div class="box"><h3>🔄 التحديثات</h3><p>الإصدار الحالي: <b dir="ltr">v1.'+UPD.cur+'</b>'+
+    (UPD.latest?' · أحدث إصدار: <b dir="ltr">v1.'+UPD.latest+'</b>':'')+'</p>'+
+    (updAvailable()?'<p>'+(updStatusText()||'🎁 يوجد تحديث جديد')+'</p><button class="btn" data-update>⬇️ تحديث الآن</button>':
+      (UPD.latest?'<p>✅ لديك أحدث إصدار</p>':''))+
+    (UPD.err?'<p style="color:#A3262A">'+esc(UPD.err)+'</p>':'')+
+    ' <button class="btn alt" data-updcheck>🔍 التحقق الآن</button></div>';
+}
+function updRefresh(){
+  var m=document.getElementById('main'),b=m&&m.querySelector('.updbanner'),html=updBannerHtml();
+  if(b){if(html)b.outerHTML=html;else b.remove();}else if(html&&m)m.insertAdjacentHTML('afterbegin',html);
+  if(!document.getElementById('parentOv').hidden&&PT==='backup')renderParent();
+}
+window.qgUpdateState=function(state,val){UPD.state=state;UPD.pct=val||0;updRefresh();if(state==='ready')setTimeout(function(){UPD.state='';updRefresh();},8000);};
+function updStart(){
+  if(!updAvailable())return;
+  UPD.state='progress';UPD.pct=0;updRefresh();
+  try{AndroidBridge.installUpdate(UPD.url);}catch(e){UPD.state='error';updRefresh();}
+}
+if(isAndroidApp()){setTimeout(function(){updCheck(false);},1500);
+  document.addEventListener('visibilitychange',function(){if(!document.hidden){if(UPD.state==='permission'){UPD.state='';updRefresh();}updCheck(false);}});}
 
 /* changes saved elsewhere on this device (another tab / the installed app) show up instantly */
 window.addEventListener('storage',function(e){

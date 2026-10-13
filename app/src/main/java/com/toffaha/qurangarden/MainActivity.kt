@@ -2,14 +2,19 @@ package com.toffaha.qurangarden
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.DownloadManager
 import android.content.ContentValues
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import android.os.Handler
+import android.os.Looper
 import android.provider.MediaStore
+import android.provider.Settings
 import android.speech.tts.TextToSpeech
 import android.util.Base64
 import android.view.WindowManager
@@ -25,6 +30,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -231,10 +237,103 @@ class MainActivity : ComponentActivity() {
 
         @JavascriptInterface
         fun isApp(): Boolean = true
+
+        /** Installed version, compared with the latest GitHub release (tag v1.<versionCode>). */
+        @JavascriptInterface
+        fun versionCode(): Int = try {
+            val info = packageManager.getPackageInfo(packageName, 0)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) info.longVersionCode.toInt()
+            else @Suppress("DEPRECATION") info.versionCode
+        } catch (e: Exception) {
+            0
+        }
+
+        /** Downloads the new APK from this app's own GitHub releases and opens the installer. */
+        @JavascriptInterface
+        fun installUpdate(url: String) {
+            runOnUiThread { startUpdate(url) }
+        }
+    }
+
+    // ---------- in-app update ----------
+    private val handler = Handler(Looper.getMainLooper())
+    private var downloadId = -1L
+
+    private fun notifyPage(state: String, value: Int = 0) {
+        web.evaluateJavascript("window.qgUpdateState&&window.qgUpdateState('$state',$value)", null)
+    }
+
+    private fun startUpdate(url: String) {
+        // Only ever install APKs published by this project's own GitHub releases.
+        if (!url.startsWith(UPDATE_PREFIX) || !url.endsWith(".apk")) {
+            notifyPage("error"); return
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !packageManager.canRequestPackageInstalls()) {
+            notifyPage("permission")
+            try {
+                startActivity(
+                    Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:$packageName"))
+                )
+            } catch (e: Exception) {
+                notifyPage("error")
+            }
+            return
+        }
+        try {
+            val dir = File(getExternalFilesDir(null), "updates").apply { mkdirs() }
+            val target = File(dir, "quran-garden-update.apk")
+            if (target.exists()) target.delete()
+            val dm = getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+            val req = DownloadManager.Request(Uri.parse(url))
+                .setTitle(getString(R.string.app_name))
+                .setDescription("تحديث جديد")
+                .setMimeType("application/vnd.android.package-archive")
+                .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE)
+                .setDestinationUri(Uri.fromFile(target))
+            downloadId = dm.enqueue(req)
+            notifyPage("progress", 0)
+            handler.post(object : Runnable {
+                override fun run() {
+                    val c = dm.query(DownloadManager.Query().setFilterById(downloadId))
+                    if (c == null || !c.moveToFirst()) {
+                        c?.close(); notifyPage("error"); return
+                    }
+                    val status = c.getInt(c.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS))
+                    val done = c.getLong(c.getColumnIndexOrThrow(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR))
+                    val total = c.getLong(c.getColumnIndexOrThrow(DownloadManager.COLUMN_TOTAL_SIZE_BYTES))
+                    c.close()
+                    when (status) {
+                        DownloadManager.STATUS_SUCCESSFUL -> {
+                            notifyPage("ready", 100); openInstaller(target)
+                        }
+                        DownloadManager.STATUS_FAILED -> notifyPage("error")
+                        else -> {
+                            if (total > 0) notifyPage("progress", ((done * 100) / total).toInt())
+                            handler.postDelayed(this, 500)
+                        }
+                    }
+                }
+            })
+        } catch (e: Exception) {
+            notifyPage("error")
+        }
+    }
+
+    private fun openInstaller(apk: File) {
+        try {
+            val uri = FileProvider.getUriForFile(this, "$packageName.files", apk)
+            val intent = Intent(Intent.ACTION_VIEW)
+                .setDataAndType(uri, "application/vnd.android.package-archive")
+                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
+            startActivity(intent)
+        } catch (e: Exception) {
+            notifyPage("error")
+        }
     }
 
     companion object {
         private const val APP_HOST = "appassets.androidplatform.net"
         private const val START_URL = "https://$APP_HOST/assets/www/index.html"
+        private const val UPDATE_PREFIX = "https://github.com/MuhammadToffaha/Quran-Garden/releases/download/"
     }
 }

@@ -2,7 +2,11 @@ name: Build APK
 
 on:
   push:
+    branches: [main]
   workflow_dispatch:
+
+permissions:
+  contents: write   # needed to publish the APK as a GitHub Release
 
 jobs:
   build:
@@ -22,7 +26,23 @@ jobs:
       - name: Build installable APK
         run: gradle :app:assembleRelease --no-daemon --stacktrace
 
+      - name: Name the APK
+        run: cp app/build/outputs/apk/release/app-release.apk quran-garden.apk
+
       - uses: actions/upload-artifact@v4
         with:
           name: quran-garden-apk
-          path: app/build/outputs/apk/release/*.apk
+          path: quran-garden.apk
+
+      # Every build becomes the "latest" release. The app checks this release
+      # and offers the update from inside the parents' panel.
+      - name: Publish release (Download APK)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="v1.${GITHUB_RUN_NUMBER}"
+          MSG=$(git log -1 --pretty=%s)
+          gh release create "$TAG" quran-garden.apk \
+            --title "حديقة القرآن ${TAG}" \
+            --notes "${MSG}" \
+            --latest
