@@ -287,6 +287,39 @@ header,main,.overlay>.modal,#gEnd,#toast,#shead,#pctrl{zoom:var(--ui)}
 #player.focus #reader{padding-top:28px;padding-bottom:110px}
 #player.focus .focusPause{display:flex;position:absolute;bottom:22px;left:22px;z-index:3;width:60px;height:60px;border-radius:50%;border:3px solid #fff;background:var(--ink);color:#fff;align-items:center;justify-content:center;opacity:.85;box-shadow:0 4px 0 rgba(0,0,0,.25)}
 #player.focus .focusPause:hover{opacity:1}
+/* ---------- journey scene ---------- */
+:root{--js1:#7CC8EE;--js2:#DDF3FC;--jh1:#9FD38A;--jh2:#7DC067;--jh3:#62AE4E;--jroad:#F2CF3E;--jedge:#D9AE1E}
+body[data-theme="sea"]{--js1:#5BB8E6;--js2:#E3F6FF;--jh1:#9ED8C6;--jh2:#6FC3B0;--jh3:#4FAE98;--jroad:#F6E3B4;--jedge:#D9BE7E}
+body[data-theme="desert"]{--js1:#FFB27A;--js2:#FFE7CC;--jh1:#F1C98B;--jh2:#E5B36E;--jh3:#D69B52;--jroad:#FFE9A8;--jedge:#E0B95C}
+body[data-theme="space"]{--js1:#251A5E;--js2:#5E46B0;--jh1:#6B57B8;--jh2:#5642A0;--jh3:#433188;--jroad:#FFD95A;--jedge:#D9A92A}
+body[data-theme="rose"]{--js1:#FFB3CF;--js2:#FFEAF2;--jh1:#B9E0A0;--jh2:#9CD283;--jh3:#7FC36A;--jroad:#FFE08A;--jedge:#E5B94E}
+.jscene{position:relative;height:440px;border-radius:26px;overflow:hidden;border:4px solid #fff;box-shadow:0 6px 0 var(--line)}
+.jsvg{position:absolute;inset:0;width:100%;height:100%;display:block}
+.jcard{position:absolute;transform:translate(-50%,-62%);display:flex;align-items:center;gap:12px;min-width:250px;padding:10px 14px;border-radius:999px;border:5px solid #8FD4A9;background:#fff;color:var(--ink);box-shadow:0 6px 0 rgba(0,0,0,.12);z-index:3}
+.jnum{flex:0 0 56px;height:56px;border-radius:50%;border:4px solid #E9D9A6;background:#FFFBEF;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800}
+.jname{display:flex;flex-direction:column;align-items:stretch;gap:4px;flex:1;text-align:center}
+.jname b{font-family:'Amiri Quran','Amiri',serif;font-weight:400;font-size:24px;line-height:1.5}
+.jname small{font-size:14px;color:#5B4A33;text-align:start}
+.jbar{display:block;height:8px;border-radius:999px;background:#E6E9EE;overflow:hidden;direction:ltr}
+.jbar i{display:block;height:100%;background:#F2B705;border-radius:999px}
+.jstop{position:absolute;transform:translate(-50%,-50%);border-radius:50%;border:4px solid #fff;background:#FFFBEF;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 0 rgba(0,0,0,.15);padding:0;z-index:2;font-size:18px}
+.jstop[disabled]{opacity:.75}
+.jline{position:absolute;left:22%;right:22%;height:3px;background:linear-gradient(90deg,transparent,var(--leaf-d) 20%,var(--leaf-d) 80%,transparent);z-index:1;transform:translateY(-50%);opacity:.7}
+.kidchar{position:absolute;left:6%;bottom:6%;width:120px;z-index:4;filter:drop-shadow(3px 0 0 #fff) drop-shadow(-3px 0 0 #fff) drop-shadow(0 3px 0 #fff) drop-shadow(0 -3px 0 #fff) drop-shadow(0 8px 8px rgba(0,0,0,.25))}
+.khead{position:relative;width:84px;height:84px;margin:0 auto -14px;border-radius:50%;overflow:hidden;background:#FFF1C9;display:flex;align-items:center;justify-content:center;font-size:52px;z-index:1}
+.khead img{width:100%;height:100%;object-fit:cover}
+.kbody{display:block;margin:0 auto}
+.jorb{position:absolute;top:8%;left:9%;width:58px;height:58px;border-radius:50%;background:radial-gradient(circle at 40% 40%,#FFF3B0,#FFD24A 60%,#F5B82E);box-shadow:0 0 0 10px rgba(255,217,90,.25);z-index:1}
+.jorb.moon{background:radial-gradient(circle at 35% 35%,#FFFDF0,#F3E7C2);box-shadow:0 0 18px 4px rgba(255,255,230,.35)}
+.jlab{position:absolute;transform:translate(26px,-50%);background:rgba(255,255,255,.92);border-radius:999px;padding:1px 10px;font-size:14px;font-weight:800;z-index:2;white-space:nowrap}
+.jdone{position:absolute;top:12px;right:12px;z-index:3;background:rgba(255,255,255,.92);border-radius:999px;padding:2px 12px;font-weight:800;font-size:15px}
+@media (max-width:600px){
+  .jscene{height:380px}
+  .jcard{min-width:210px;gap:8px;padding:8px 10px}
+  .jnum{flex-basis:46px;height:46px;font-size:20px}
+  .jname b{font-size:20px}
+  .kidchar{left:2%;bottom:4%;transform:scale(.8);transform-origin:bottom left}
+}
 /* ---------- themes ---------- */
 body[data-theme="sea"]{--ink:#12324A;--green:#0F6E8C;--leaf:#3BA7C9;--sun:#FFB547;--sand:#F0F9FF;--deep:#0B3D5C;--sky:#7FD0F0;--sky2:#E3F6FF;--sky3:#9CCFE4;--bed:#DDF2FA;--soft:#FFF4DA;--line:#BFD9E6;--leaf2:#8CC9DF;--leaf-d:#2E8FB0;--wood:#2F8FB0;--wood2:#1D6A85;--paper:#FAFDFF;--green-d:#0B4F66;--berry:#B03A6F}
 body[data-theme="desert"]{--ink:#4A2A14;--green:#B5541C;--leaf:#E8914A;--sun:#FFC93C;--sand:#FFF5E8;--deep:#7A3510;--sky:#FFC59E;--sky2:#FFEBD6;--sky3:#F2BE95;--bed:#FBE7D2;--soft:#FFF1D0;--line:#EBCFAE;--leaf2:#F0B07A;--leaf-d:#C9743A;--wood:#A0522D;--wood2:#6E3517;--paper:#FFFBF5;--green-d:#7F3912;--berry:#9C2F5E}
@@ -938,6 +971,65 @@ var SKY=(function(){var h='',x=0,i=0;while(x<1600){var w=40+((i*37)%35),ht=30+((
   for(var wy=100-ht+8;wy<92;wy+=14)for(var wx=x+6;wx<x+w-8;wx+=12)if(((wx+wy+i)%3)!==0)h+='<rect class="win" x="'+wx+'" y="'+wy+'" width="5" height="6"/>';x+=w+8;i++;}
   return '<svg class="skyline" width="3200" height="100" viewBox="0 0 3200 100" aria-hidden="true"><g>'+h+'</g><g transform="translate(1600 0)">'+h+'</g></svg>';})();
 var lastStationKid=null;
+/* ---------- illustrated journey scene: winding road up the hills + the child as a sticker ---------- */
+var ROAD=(function(){
+  function c(t){return {x:400+70*Math.sin(t*3.4+.3)+t*20,y:432-400*(1-Math.pow(1-t,1.55)),w:170*(1-t)+16*t};}
+  var L=[],R=[];for(var i=0;i<=40;i++){var t=i/40,p=c(t),q=c(Math.min(1,t+.01)),dx=q.x-p.x,dy=q.y-p.y,len=Math.sqrt(dx*dx+dy*dy)||1,nx=-dy/len,ny=dx/len;
+    L.push((p.x+nx*p.w/2).toFixed(1)+','+(p.y+ny*p.w/2).toFixed(1));R.unshift((p.x-nx*p.w/2).toFixed(1)+','+(p.y-ny*p.w/2).toFixed(1));}
+  return {at:c,poly:L.concat(R).join(' ')};
+})();
+function sceneTree(x,y,s,dark){return '<g transform="translate('+x+' '+y+') scale('+s+')"><rect x="-4" y="0" width="8" height="22" rx="3" fill="#8C5A2B"/><circle cx="0" cy="-8" r="20" style="fill:var(--'+(dark?'leaf-d':'leaf')+')"/><circle cx="-12" cy="2" r="13" style="fill:var(--'+(dark?'leaf-d':'leaf')+')"/><circle cx="12" cy="2" r="13" style="fill:var(--leaf-d)"/></g>';}
+function kidSticker(k){
+  var head=k.photo&&/^data:image\/(jpeg|png|webp);base64,/.test(k.photo)?'<img src="'+k.photo+'" alt="">':'<span>'+esc(k.avatar||'🙂')+'</span>';
+  return '<div class="kidchar" aria-hidden="true"><div class="khead">'+head+'</div>'+
+    '<svg class="kbody" viewBox="0 0 120 150" width="120" height="150">'+
+    '<rect x="38" y="78" width="19" height="56" rx="8" fill="#9AA3AD"/><rect x="63" y="78" width="19" height="56" rx="8" fill="#8E97A1"/>'+
+    '<ellipse cx="45" cy="138" rx="17" ry="9" fill="#2C3E66"/><ellipse cx="75" cy="138" rx="17" ry="9" fill="#2C3E66"/>'+
+    '<ellipse cx="45" cy="135" rx="11" ry="4" fill="#fff" opacity=".7"/><ellipse cx="75" cy="135" rx="11" ry="4" fill="#fff" opacity=".7"/>'+
+    '<path d="M30 14 Q60 2 90 14 L94 84 Q60 92 26 84 Z" style="fill:var(--leaf)"/>'+
+    '<g style="fill:var(--green)" opacity=".85"><rect x="28" y="30" width="64" height="9"/><rect x="27" y="50" width="66" height="9"/><rect x="26" y="70" width="68" height="9"/></g>'+
+    '<path d="M30 16 Q14 34 34 52 L50 46 Q38 34 40 22 Z" fill="#F2C9A0"/><path d="M90 16 Q106 34 86 52 L70 46 Q82 34 80 22 Z" fill="#F2C9A0"/>'+
+    '<ellipse cx="52" cy="47" rx="9" ry="11" fill="#F2C9A0"/><ellipse cx="68" cy="47" rx="9" ry="11" fill="#F2C9A0"/>'+
+    '<rect x="51" y="4" width="18" height="12" rx="5" fill="#F2C9A0"/></svg></div>';
+}
+function journeyScene(k,curIdx){
+  var th=k.theme||'garden',p=k.prog,plan=k.plan,up=[];
+  for(var i=curIdx;i<ORDER.length&&up.length<4;i++)up.push(ORDER[i]);
+  var done=ORDER.filter(function(n){return p[n]===3;}).length;
+  var sky='';
+  if(th==='space')for(var s=0;s<28;s++)sky+='<circle cx="'+((s*137)%800)+'" cy="'+((s*53)%150+8)+'" r="'+(s%3?1.4:2.4)+'" fill="#fff" opacity=".85"/>';
+  else sky+='<g fill="#fff" opacity=".95"><ellipse cx="120" cy="60" rx="70" ry="22"/><ellipse cx="160" cy="48" rx="44" ry="24"/><ellipse cx="640" cy="40" rx="60" ry="18"/><ellipse cx="672" cy="30" rx="36" ry="20"/></g>';
+  if(th==='sea')sky+='<rect x="0" y="150" width="800" height="26" fill="#3BA7C9" opacity=".55"/>';
+  var orb=th==='space'?'<span class="jorb moon"></span>':(th==='desert'||th==='garden')?'<span class="jorb"></span>':'';
+  var road=ROAD,svg='<svg class="jsvg" viewBox="0 0 800 440" preserveAspectRatio="none" aria-hidden="true">'+
+    '<defs><linearGradient id="jsky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--js1)"/><stop offset="1" style="stop-color:var(--js2)"/></linearGradient></defs>'+
+    '<rect width="800" height="440" fill="url(#jsky)"/>'+sky+
+    '<path d="M0 190 Q120 130 260 170 T520 150 T800 160 V440 H0Z" style="fill:var(--jh1)"/>'+
+    '<path d="M0 240 Q160 180 330 225 T640 205 T800 215 V440 H0Z" style="fill:var(--jh2)"/>'+
+    '<path d="M0 300 Q200 250 400 290 T800 280 V440 H0Z" style="fill:var(--jh3)"/>'+
+    sceneTree(110,250,.9,true)+sceneTree(690,235,.8,true)+sceneTree(220,320,1.3,false)+sceneTree(610,300,1.1,false)+sceneTree(740,360,1.5,true)+
+    '<polygon points="'+road.poly+'" style="fill:var(--jroad);stroke:var(--jedge)" stroke-width="7" stroke-linejoin="round"/>'+
+    '<g fill="#E4572E"><circle cx="70" cy="400" r="9"/><circle cx="58" cy="410" r="7"/></g><g fill="#fff"><circle cx="760" cy="420" r="7"/><circle cx="772" cy="412" r="6"/></g><g fill="#8E6BD8"><circle cx="730" cy="410" r="6"/></g>'+
+    '</svg>';
+  var ts=[.1,.44,.68,.86],html='';
+  up.forEach(function(n,j){
+    var pt=road.at(ts[j]),left=(pt.x/800*100).toFixed(1),top=(pt.y/440*100).toFixed(1),st=p[n]||0,locked=ORDER.indexOf(n)>=plan;
+    if(j===0){
+      var arr=k.al[n]||[],need=passes(k,n)+1,heard=0;for(var a=1;a<=SURAHS[n][1];a++)if((arr[a]||0)>=need)heard++;
+      if(st===3)heard=SURAHS[n][1];
+      html+='<button class="jcard" style="left:'+left+'%;top:'+top+'%" data-open="'+n+'"'+(locked?' disabled':'')+' aria-label="سورة '+SURAHS[n][0]+'">'+
+        '<span class="jnum">'+ar(n)+'</span><span class="jname"><b>سُورَةُ '+SURAHS[n][0]+'</b><span class="jbar"><i style="width:'+Math.round(heard*100/SURAHS[n][1])+'%"></i></span><small>'+ar(heard)+'/'+ar(SURAHS[n][1])+'</small></span></button>';
+    } else {
+      var sz=[0,56,44,34][j];
+      html+=(j===1?'<span class="jline" style="top:'+top+'%"></span>':'')+
+        '<button class="jstop" style="left:'+left+'%;top:'+top+'%;width:'+sz+'px;height:'+sz+'px" data-open="'+n+'"'+(locked?' disabled':'')+' aria-label="سورة '+SURAHS[n][0]+(locked?' (مقفلة)':'')+'" title="سورة '+SURAHS[n][0]+'">'+(locked?'🔒':plantSvg(st,n,Math.round(sz*.62)))+'</button>'+
+        (j===1?'<span class="jlab" style="left:'+left+'%;top:'+top+'%">'+SURAHS[n][0]+'</span>':'');
+    }
+  });
+  if(!up.length){var tp=road.at(.3);html+='<div class="jstop" style="left:'+(tp.x/8)+'%;top:'+(tp.y/4.4)+'%;width:70px;height:70px;font-size:40px">🏆</div>';}
+  return '<div class="jscene" data-scene="'+th+'">'+svg+orb+html+kidSticker(k)+
+    '<span class="jdone">🌸 '+ar(done)+' محفوظة</span></div>';
+}
 function raceHtml(){
   var k=K(),s=kidSummary(k),plan=k.plan,p=k.prog,curN=null,curIdx=plan;
   for(var i=0;i<plan;i++){if((p[ORDER[i]]||0)<3){curN=ORDER[i];curIdx=i;break;}}
@@ -960,7 +1052,7 @@ function raceHtml(){
   }
   var board=D.kids.length>1?'<div class="board" aria-label="ترتيب الأبطال">'+ranked.map(function(r,place){
     return '<span class="bchip'+(r.i===D.kid?' me':'')+'">'+(['🥇','🥈','🥉'][place]||'🏅')+'<span class="av sm">'+avInner(r.k)+'</span>'+esc(r.k.name)+' · ⭐ '+ar(r.k.points||0)+' · 🌸 '+ar(r.s.flowers)+'</span>';}).join('')+'</div>':'';
-  return '<section class="journey" aria-label="رحلة البطل">'+scene+stations+board+'</section>'+review;
+  return '<section class="journey" aria-label="رحلة البطل">'+scene+journeyScene(k,curIdx)+stations+board+'</section>'+review;
 }
 /* ---------- reward game: 3-lane rail runner ---------- */
 function fmtClock(ms){var t=Math.ceil(ms/1000),m=Math.floor(t/60),s=t%60;return ar(m)+':'+(s<10?'٠':'')+ar(s);}
