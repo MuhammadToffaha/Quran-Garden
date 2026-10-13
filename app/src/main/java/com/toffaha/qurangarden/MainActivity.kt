@@ -248,6 +248,21 @@ class MainActivity : ComponentActivity() {
             0
         }
 
+        /** Reads the daily nature picture list (Bing image of the day). Only bing.com is allowed. */
+        @JavascriptInterface
+        fun fetchText(url: String): String? {
+            return try {
+                val u = java.net.URL(url)
+                if (u.protocol != "https" || u.host != "www.bing.com") return null
+                val c = u.openConnection() as java.net.HttpURLConnection
+                c.connectTimeout = 8000
+                c.readTimeout = 8000
+                c.inputStream.bufferedReader().use { it.readText().take(200_000) }
+            } catch (e: Exception) {
+                null
+            }
+        }
+
         /** Downloads the new APK from this app's own GitHub releases and opens the installer. */
         @JavascriptInterface
         fun installUpdate(url: String) {

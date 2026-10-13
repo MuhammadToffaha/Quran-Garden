@@ -312,6 +312,11 @@ body[data-theme="rose"]{--js1:#FFB3CF;--js2:#FFEAF2;--jh1:#B9E0A0;--jh2:#9CD283;
 .jorb{position:absolute;top:8%;left:9%;width:58px;height:58px;border-radius:50%;background:radial-gradient(circle at 40% 40%,#FFF3B0,#FFD24A 60%,#F5B82E);box-shadow:0 0 0 10px rgba(255,217,90,.25);z-index:1}
 .jorb.moon{background:radial-gradient(circle at 35% 35%,#FFFDF0,#F3E7C2);box-shadow:0 0 18px 4px rgba(255,255,230,.35)}
 .jlab{position:absolute;transform:translate(26px,-50%);background:rgba(255,255,255,.92);border-radius:999px;padding:1px 10px;font-size:14px;font-weight:800;z-index:2;white-space:nowrap}
+.jphoto{position:absolute;inset:0;background-size:cover;background-position:center;z-index:0}
+.jphoto::after{content:"";position:absolute;inset:0;background:linear-gradient(rgba(0,0,0,0) 55%,rgba(0,0,0,.25))}
+.jscene.hasphoto .jbg{display:none}
+.jscene.hasphoto .jsvg{z-index:1}
+.jcredit{position:absolute;bottom:6px;right:10px;z-index:3;max-width:60%;font-size:11px;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;direction:ltr}
 .jdone{position:absolute;top:12px;right:12px;z-index:3;background:rgba(255,255,255,.92);border-radius:999px;padding:2px 12px;font-weight:800;font-size:15px}
 @media (max-width:600px){
   .jscene{height:380px}
@@ -1003,13 +1008,13 @@ function journeyScene(k,curIdx){
   var orb=th==='space'?'<span class="jorb moon"></span>':(th==='desert'||th==='garden')?'<span class="jorb"></span>':'';
   var road=ROAD,svg='<svg class="jsvg" viewBox="0 0 800 440" preserveAspectRatio="none" aria-hidden="true">'+
     '<defs><linearGradient id="jsky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--js1)"/><stop offset="1" style="stop-color:var(--js2)"/></linearGradient></defs>'+
-    '<rect width="800" height="440" fill="url(#jsky)"/>'+sky+
+    '<g class="jbg"><rect width="800" height="440" fill="url(#jsky)"/>'+sky+
     '<path d="M0 190 Q120 130 260 170 T520 150 T800 160 V440 H0Z" style="fill:var(--jh1)"/>'+
     '<path d="M0 240 Q160 180 330 225 T640 205 T800 215 V440 H0Z" style="fill:var(--jh2)"/>'+
     '<path d="M0 300 Q200 250 400 290 T800 280 V440 H0Z" style="fill:var(--jh3)"/>'+
-    sceneTree(110,250,.9,true)+sceneTree(690,235,.8,true)+sceneTree(220,320,1.3,false)+sceneTree(610,300,1.1,false)+sceneTree(740,360,1.5,true)+
+    sceneTree(110,250,.9,true)+sceneTree(690,235,.8,true)+sceneTree(220,320,1.3,false)+sceneTree(610,300,1.1,false)+sceneTree(740,360,1.5,true)+'</g>'+
     '<polygon points="'+road.poly+'" style="fill:var(--jroad);stroke:var(--jedge)" stroke-width="7" stroke-linejoin="round"/>'+
-    '<g fill="#E4572E"><circle cx="70" cy="400" r="9"/><circle cx="58" cy="410" r="7"/></g><g fill="#fff"><circle cx="760" cy="420" r="7"/><circle cx="772" cy="412" r="6"/></g><g fill="#8E6BD8"><circle cx="730" cy="410" r="6"/></g>'+
+    '<g class="jbg" fill="#E4572E"><circle cx="70" cy="400" r="9"/><circle cx="58" cy="410" r="7"/></g></g><g class="jbg" fill="#fff"><circle cx="760" cy="420" r="7"/><circle cx="772" cy="412" r="6"/></g><g class="jbg" fill="#8E6BD8"><circle cx="730" cy="410" r="6"/></g>'+
     '</svg>';
   var ts=[.1,.44,.68,.86],html='';
   up.forEach(function(n,j){
@@ -1027,9 +1032,33 @@ function journeyScene(k,curIdx){
     }
   });
   if(!up.length){var tp=road.at(.3);html+='<div class="jstop" style="left:'+(tp.x/8)+'%;top:'+(tp.y/4.4)+'%;width:70px;height:70px;font-size:40px">🏆</div>';}
-  return '<div class="jscene" data-scene="'+th+'">'+svg+orb+html+kidSticker(k)+
-    '<span class="jdone">🌸 '+ar(done)+' محفوظة</span></div>';
+  var ph=D.set.natureBg!==false&&BGPIC.url;
+  return '<div class="jscene'+(ph?' hasphoto':'')+'" data-scene="'+th+'">'+
+    (ph?'<div class="jphoto" style="background-image:url(&quot;'+esc(BGPIC.url)+'&quot;)"></div>':'')+svg+(ph?'':orb)+html+kidSticker(k)+
+    '<span class="jdone">🌸 '+ar(done)+' محفوظة</span>'+
+    (ph&&BGPIC.credit?'<span class="jcredit">📷 '+esc(BGPIC.credit)+'</span>':'')+'</div>';
 }
+/* ---------- daily nature picture behind the journey (Bing image of the day) ---------- */
+var BGPIC={url:'',credit:'',day:''};
+try{var _bg=JSON.parse(localStorage.getItem('qg-bgpic')||'null');if(_bg&&_bg.url)BGPIC=_bg;}catch(e){}
+function bgDay(){return dkey();}
+function bgSave(u,c){BGPIC={url:u,credit:c||'',day:bgDay()};try{localStorage.setItem('qg-bgpic',JSON.stringify(BGPIC));}catch(e){}
+  var img=new Image();img.onload=function(){if(document.getElementById('main'))renderGarden();};img.src=u;}
+function bgPick(list){
+  /* one picture per day; changes every day, stays the same all day */
+  var d=new Date(),seed=d.getFullYear()*372+d.getMonth()*31+d.getDate();return list[seed%list.length];
+}
+function bgLoad(){
+  if(D.set.natureBg===false||BGPIC.day===bgDay())return;
+  var parse=function(txt){var j=JSON.parse(txt),imgs=(j.images||[]).filter(function(x){return x&&x.url;});if(!imgs.length)throw 0;
+    var im=bgPick(imgs);return {u:(/^https?:/.test(im.url)?'':'https://www.bing.com')+im.url,c:String(im.copyright||'').replace(/\s*\(©.*$/,'')};};
+  var api='https://www.bing.com/HPImageArchive.aspx?format=js&idx=0&n=8&mkt=en-US';
+  try{if(window.AndroidBridge&&AndroidBridge.fetchText){var t=AndroidBridge.fetchText(api);if(t){var r=parse(t);bgSave(r.u,r.c);return;}}}catch(e){}
+  fetch('https://bing.biturl.top/?resolution=1920&format=json&index='+(new Date().getDate()%8)+'&mkt=en-US').then(function(r){if(!r.ok)throw r.status;return r.json();})
+    .then(function(j){if(j&&j.url)bgSave(j.url,String(j.copyright||'').replace(/\s*\(©.*$/,''));}).catch(function(){});
+}
+setTimeout(bgLoad,1200);
+document.addEventListener('visibilitychange',function(){if(!document.hidden)bgLoad();});
 function raceHtml(){
   var k=K(),s=kidSummary(k),plan=k.plan,p=k.prog,curN=null,curIdx=plan;
   for(var i=0;i<plan;i++){if((p[ORDER[i]]||0)<3){curN=ORDER[i];curIdx=i;break;}}
@@ -1427,6 +1456,7 @@ function renderParent(){
       '</div></div>'+
       '<div class="box"><h3>الأهداف والتحفيز</h3><div class="kgrid">'+num('goal','هدف اليوم (عدد الآيات المسموعة)',R.goal,1,500,'يحتفل الطفل عند تحقيق الهدف')+'</div>'+
       '<label class="field" style="margin:6px 0 10px"><span>عند الضغط على السورة تفتح في وضع</span><select data-set="mode"><option value="read"'+(R.mode!=='memo'?' selected':'')+'>📖 قراءة مع الشيخ (بدون تكرار)</option><option value="memo"'+(R.mode==='memo'?' selected':'')+'>🔁 حفظ وتكرار</option></select><span class="note">الطفل يستطيع التبديل بين الوضعين في أي وقت.</span></label>'+
+      '<label class="switch"><span>🏞️ صورة طبيعة جديدة كل يوم خلف رحلة الطفل</span><input type="checkbox" data-set="natureBg"'+(R.natureBg!==false?' checked':'')+'></label>'+
       '<label class="switch"><span>أصوات الاحتفال والمؤثرات</span><input type="checkbox" data-set="sfx"'+(R.sfx?' checked':'')+'></label>'+
       '<label class="switch"><span>الزهرة تحتاج تسميعاً أمام الوالدين</span><input type="checkbox" data-set="approve"'+(R.approve?' checked':'')+'></label>'+
       '<div class="note">عند التفعيل: بعد الاستماع المطلوب تظهر «جاهز للتسميع»، ولا تصير زهرة إلا بكلمة مرورك بعد أن تسمع السورة من طفلك.</div></div>'+
@@ -1508,7 +1538,7 @@ document.addEventListener('change',function(e){
   if(t.dataset.name!=null){D.kids[+t.dataset.name].name=t.value.trim().slice(0,20)||'بطل';save();renderKids();renderStats();}
   if(t.id==='photoFile'&&t.files[0]&&photoKid!=null){loadPhoto(t.files[0]);t.value='';}
   if(t.dataset.set){var k=t.dataset.set;
-    if(t.type==='checkbox')D.set[k]=t.checked;
+    if(t.type==='checkbox'){D.set[k]=t.checked;if(k==='natureBg'){if(t.checked){BGPIC.day='';bgLoad();}renderGarden();}}
     else if(k==='rate')D.set.rate=parseFloat(t.value);
     else if(k==='mode')D.set.mode=t.value==='memo'?'memo':'read';
     else if(k==='uiScale'){D.set.uiScale=clamp(parseFloat(t.value)||.85,.7,1.2);applyScale();}
