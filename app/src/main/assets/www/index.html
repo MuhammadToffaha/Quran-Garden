@@ -152,6 +152,10 @@ footer{text-align:center;font-size:16px}
 .updnotes{margin-top:6px;font-size:15px;background:rgba(255,255,255,.6);border-radius:12px;padding:4px 10px}
 .updnotes summary{cursor:pointer;font-weight:800;min-height:32px;display:flex;align-items:center;gap:6px}
 .updnotes ul{margin:4px 0;padding-inline-start:20px}.updnotes p{margin:4px 0}.updnotes .nh{font-weight:800}
+.whogrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
+.whokid{display:flex;flex-direction:column;align-items:center;gap:6px;min-height:130px;border-radius:20px;border:3px solid var(--line);background:#fff;color:var(--ink);font-size:18px;padding:10px}
+.whokid.on{border-color:var(--green);background:#EEF8E8}
+.kid.solo{cursor:default}
 .famcode{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:28px;font-weight:800;letter-spacing:2px;text-align:center;background:var(--soft);border:3px dashed #E0A915;border-radius:16px;padding:10px;user-select:all}
 .rules{direction:ltr;text-align:left;background:var(--ink);color:#DDF3D3;border-radius:14px;padding:12px;font-size:14px;overflow-x:auto}
 #dbUrl,#joinLinkIn{direction:ltr;text-align:left;font-size:15px}
@@ -1615,7 +1619,7 @@ function raceHtml(){
         '<p style="font-size:19px;margin:8px 0 0">✅ أنهيت مراجعة اليوم! ما شاء الله</p>')+
       (rv.doneToday.length?'<p class="note" style="margin:6px 0 0">راجعت اليوم: '+rv.doneToday.map(function(n){return SURAHS[n][0];}).join('، ')+'</p>':'')+'</section>';
   }
-  var board=D.kids.length>1?'<div class="board" aria-label="ترتيب الأبطال">'+ranked.map(function(r,place){
+  var board=D.kids.length>1&&!kidLocked()?'<div class="board" aria-label="ترتيب الأبطال">'+ranked.map(function(r,place){
     return '<span class="bchip'+(r.i===D.kid?' me':'')+'">'+(['🥇','🥈','🥉'][place]||'🏅')+'<span class="av sm">'+avInner(r.k)+'</span>'+esc(r.k.name)+' · ⭐ '+ar(r.k.points||0)+' · 🌸 '+ar(r.s.flowers)+'</span>';}).join('')+'</div>':'';
   return '<section class="journey" aria-label="رحلة البطل">'+scene+journeyScene(k,curIdx)+stations+board+'</section>'+review;
 }
@@ -1814,7 +1818,31 @@ function drawQuiz(){
 function playQ(q){try{qAudio.src=QURAN_AUDIO+pad3(q.audio[0])+pad3(q.audio[1])+'.mp3';qAudio.onerror=function(){qAudio.onerror=null;qAudio.src=fallbackUrl(q.audio[0],q.audio[1]);qAudio.play().catch(function(){});};qAudio.play().catch(function(){});}catch(e){}}
 
 /* ---------- render: kids & stats ---------- */
+/* ---------- device role: parent device = full app, child device = only that child ---------- */
+var ROLE=(function(){try{var r=JSON.parse(localStorage.getItem('qg-role')||'null');if(r&&(r.role==='kid'||r.role==='parent'))return r;}catch(e){}return {role:'parent'};})();
+function saveRole(){try{localStorage.setItem('qg-role',JSON.stringify(ROLE));}catch(e){}}
+function kidLocked(){return ROLE.role==='kid'&&D.kids.some(function(k){return k.id===ROLE.kidId;});}
+function applyRole(){if(ROLE.role==='kid'&&!kidLocked()&&D.kids.length&&document.getElementById('welcomeOv').hidden&&SYNC.on){setTimeout(function(){openWhoAmI(false);},300);return;}if(!kidLocked())return;for(var i=0;i<D.kids.length;i++)if(D.kids[i].id===ROLE.kidId){D.kid=i;break;}}
+function roleLabel(){if(!kidLocked())return '👨‍👩‍👧 جهاز الوالد/الوالدة — يرى كل الأبناء';var k=K();return '🧒 جهاز '+esc(k.name)+' — يرى تقدّمه فقط';}
+function openWhoAmI(afterJoin){
+  document.getElementById('welcomeBox').innerHTML='<div class="cheer"><div class="em">📱</div><h2>لمن هذا الجهاز؟</h2>'+
+    '<p style="font-size:17px;margin:0 0 14px">'+(afterJoin?'تم الانضمام للعائلة ✔ ':'')+'اختر الطفل الذي سيستخدم هذا الجهاز، فيظهر له تقدّمه هو فقط.</p>'+
+    '<div class="whogrid">'+D.kids.map(function(k){return '<button class="whokid'+(ROLE.role==='kid'&&ROLE.kidId===k.id?' on':'')+'" data-whoami="'+esc(k.id)+'"><span class="av lg">'+avInner(k)+'</span><b>'+esc(k.name)+'</b></button>';}).join('')+'</div>'+
+    '<button class="btn alt" style="margin-top:12px;width:100%" data-whoami="parent">👨‍👩‍👧 جهاز الوالد/الوالدة (كل الأبناء)</button></div>';
+  document.getElementById('welcomeOv').hidden=false;
+}
+function setRole(v){
+  if(v==='parent')ROLE={role:'parent'};else ROLE={role:'kid',kidId:v};
+  saveRole();applyRole();lastStationKid=null;document.getElementById('welcomeOv').hidden=true;render();
+  if(!document.getElementById('parentOv').hidden)renderParent();
+  toast(kidLocked()?'📱 هذا الجهاز الآن جهاز '+K().name:'📱 هذا جهاز الوالد');if(kidLocked())sayName(K().name);
+}
+function deviceRoleBoxHtml(){return '<div class="box"><h3>📱 هذا الجهاز</h3><p style="font-size:17px">'+roleLabel()+'</p><button class="btn alt" data-whoopen>🔁 تغيير</button>'+
+  '<p class="note">جهاز الطفل يعرض اسمه وتقدّمه ونقاطه وشهاداته فقط، بدون الإخوة. لوحة الوالدين تبقى بكلمة المرور.</p></div>';}
 function renderKids(){
+  if(kidLocked()){var kk=K(),ss=kidSummary(kk);
+    document.getElementById('kids').innerHTML='<button class="kid on solo" data-kid="'+D.kid+'"><span class="av" aria-hidden="true">'+avInner(kk)+'</span>'+esc(kk.name)+
+      (ss.streak>1?'<span class="fl" title="أيام متتالية">'+ar(ss.streak)+' يوم</span>':'')+'</button>';return;}
   document.getElementById('kids').innerHTML=D.kids.map(function(k,i){
     var s=kidSummary(k);
     return '<button class="kid'+(i===D.kid?' on':'')+'" data-kid="'+i+'"><span class="av" aria-hidden="true">'+avInner(k)+'</span>'+esc(k.name)+
@@ -1870,7 +1898,7 @@ function renderGarden(){
   document.getElementById('main').innerHTML=updBannerHtml()+planCardHtml()+raceHtml()+legend+zones+
     '<footer>التلاوة: الشيخ مشاري راشد العفاسي، آية بآية · يُحفظ كل شيء على هذا الجهاز</footer>';
 }
-function render(){renderKids();renderStats();renderGarden();renderPlayer();
+function render(){applyRole();renderKids();renderStats();renderGarden();renderPlayer();
   var pr=pendingRecs(),pb=document.getElementById('openParent');
   if(pb)pb.lastChild.textContent='لوحة الوالدين'+(pr?' · 🎙️ '+ar(pr):'');
   applyTheme();setTimeout(checkBadges,0);}
@@ -1976,7 +2004,7 @@ function renderParent(){
     }).join('')+'</div>';
   }
   if(PT==='kids'){
-    body=D.kids.map(function(k,i){
+    body=deviceRoleBoxHtml()+D.kids.map(function(k,i){
       return '<div class="box"><div class="row" style="align-items:flex-end">'+
         '<span class="av lg" aria-hidden="true">'+avInner(k)+'</span>'+
         '<label class="field" style="flex:1 1 200px"><span>الاسم</span><input data-name="'+i+'" value="'+esc(k.name)+'" maxlength="20"></label>'+
@@ -2111,6 +2139,8 @@ document.addEventListener('click',function(e){
   if(S.playing&&e.target.closest('#reader')){stop();S.playing=false;renderPlayer();return;}
   var b=e.target.closest('button');if(!b)return;var ds=b.dataset;
   if(ds.close){document.getElementById(ds.close).hidden=true;if(ds.close==='parentOv')render();return;}
+  if(ds.whoami){setRole(ds.whoami);return;}
+  if(ds.whoopen!=null){openWhoAmI(false);return;}
   if(ds.update!=null){updStart();return;}
   if(ds.meaning){openMeaning(+ds.meaning);return;}
   if(ds.portion!=null){openPortion();return;}
@@ -2135,7 +2165,7 @@ document.addEventListener('click',function(e){
   if(ds.joincode!=null){var cin=document.getElementById(ds.joincode==='w'?'wCode':'famCodeIn'),cc=cleanCode(cin&&cin.value);
     if(cc.length<18){toast('الرمز ناقص — ١٨ حرفاً ورقماً');return;}
     b.disabled=true;b.textContent='جارٍ الانضمام…';
-    joinFamily(EMBED,cc).then(function(){document.getElementById('welcomeOv').hidden=true;toast('☁️ تم الانضمام للعائلة ✔');render();if(!document.getElementById('parentOv').hidden)renderParent();},
+    joinFamily(EMBED,cc).then(function(){toast('☁️ تم الانضمام للعائلة ✔');render();if(!document.getElementById('parentOv').hidden)renderParent();openWhoAmI(true);},
       function(e){b.disabled=false;b.textContent='🔗 انضم للعائلة';joinErr(e);});return;}
   if(ds.wchoice){var wb=document.getElementById('welcomeBox');
     if(ds.wchoice==='later'){try{localStorage.setItem('qg-welcomed','1');}catch(err){}document.getElementById('welcomeOv').hidden=true;return;}
@@ -2150,7 +2180,7 @@ document.addEventListener('click',function(e){
   if(ds.joinpaste!=null){var jv=(document.getElementById('joinPaste').value||'').trim(),jm=/#join=(.+)$/.exec(jv),jp=jm?decodeURIComponent(jm[1]).split('|'):[];
     if(jp.length!==2||!validDbUrl(jp[0])||jp[1].length<18){toast('الرابط غير صالح — انسخه كاملاً من جهاز الوالد');return;}
     askConfirm('الانضمام لحديقة العائلة؟','سيُستبدل ما على هذا الجهاز ببيانات العائلة المشتركة.',function(){
-      joinFamily(jp[0],jp[1]).then(function(){toast('☁️ تم الانضمام للعائلة ✔');render();renderParent();},joinErr);});return;}
+      joinFamily(jp[0],jp[1]).then(function(){toast('☁️ تم الانضمام للعائلة ✔');render();renderParent();openWhoAmI(true);},joinErr);});return;}
   if(ds.copyrules!=null){copyText(FB_RULES);return;}
   if(ds.copyjoin!=null){copyText(joinLink());return;}
   if(ds.syncnow!=null){syncPull().then(function(){syncPush();renderParent();toast(SYNC.err||'تمت المزامنة ✔');});return;}
@@ -2182,6 +2212,7 @@ document.addEventListener('click',function(e){
   if(ds.nophoto!=null){D.kids[+ds.nophoto].photo=null;save();renderParent();renderKids();renderStats();return;}
   if(ds.savename!=null){var inp=document.querySelector('[data-name="'+ds.savename+'"]');D.kids[+ds.savename].name=inp.value.trim().slice(0,20)||'بطل';save();renderKids();renderStats();toast('تم حفظ الاسم ✔');return;}
   if(ds.changepw!=null){changePassword();return;}
+  if(ds.kid!=null&&kidLocked()){sayName(K().name);return;}
   if(ds.kid!=null){D.kid=+ds.kid;save();lastStationKid=null;render();sayName(K().name);return;}
   if(ds.themes!=null){openThemes();return;}
   if(ds.settheme){K().theme=ds.settheme;save();applyTheme();openThemes();return;}
@@ -2324,6 +2355,7 @@ function createFamily(url,btn){
 function syncTabHtml(){
   var h='<div class="box"><h3>☁️ مزامنة العائلة بين الأجهزة</h3>';
   if(SYNC.on&&EMBED&&SYNC.url===EMBED){
+    h=deviceRoleBoxHtml()+h;
     h+='<p style="font-size:18px">✅ <b>متصل</b>'+(SYNC.last?' · آخر مزامنة '+new Date(SYNC.last).toLocaleTimeString('ar-EG'):'')+'</p>'+
       (SYNC.err?'<p style="color:#A3262A">⚠️ '+esc(SYNC.err)+'</p>':'')+
       '<p style="margin-bottom:4px">🔑 <b>رمز العائلة</b> — اكتبه على كل جهاز في العائلة:</p>'+
@@ -2374,7 +2406,7 @@ function copyText(t){try{navigator.clipboard.writeText(t).then(function(){toast(
   var parts=decodeURIComponent(m[1]).split('|');try{history.replaceState(null,'',location.href.split('#')[0]);}catch(e){}
   if(parts.length!==2||!validDbUrl(parts[0])||parts[1].length<18){setTimeout(function(){toast('رابط الانضمام غير صالح');},500);return;}
   setTimeout(function(){askConfirm('الانضمام لحديقة العائلة؟','سيُستبدل ما على هذا الجهاز ببيانات العائلة المشتركة (الأبناء، التقدّم، الإعدادات).',function(){
-    joinFamily(parts[0],parts[1]).then(function(){toast('☁️ تم الانضمام للعائلة ✔');render();},joinErr);
+    joinFamily(parts[0],parts[1]).then(function(){toast('☁️ تم الانضمام للعائلة ✔');render();openWhoAmI(true);},joinErr);
   });},400);
 })();
 /* first launch with an embedded family database: ask "parent or kid device?" once */
