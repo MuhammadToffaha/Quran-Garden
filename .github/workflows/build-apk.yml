@@ -41,8 +41,12 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           TAG="v1.${GITHUB_RUN_NUMBER}"
-          MSG=$(git log -1 --pretty=%s)
+          # Release notes = the newest section of CHANGELOG.md (Arabic), shown in the app before updating
+          if [ -f CHANGELOG.md ]; then
+            awk 'BEGIN{n=0} /^## /{n++; if(n==2) exit; next} n==1{print}' CHANGELOG.md > notes.md
+          fi
+          if [ ! -s notes.md ]; then git log -1 --pretty=%s > notes.md; fi
           gh release create "$TAG" quran-garden.apk \
             --title "حديقة القرآن ${TAG}" \
-            --notes "${MSG}" \
+            --notes-file notes.md \
             --latest

@@ -12,7 +12,7 @@
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Baloo+Bhaijaan+2:wght@400;600;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Amiri+Quran&family=Baloo+Bhaijaan+2:wght@400;600;800&display=swap" rel="stylesheet">
 <style>
 :root{--ink:#1F3A2E;--green:#1E7A45;--leaf:#5DB36A;--sun:#F5B82E;--sand:#FFF8EC;--berry:#B5367A;--deep:#14532D;--sky:#9BD8F5;--sky2:#DDF3FC;--sky3:#A9D6EA;--bed:#E9F5DF;--soft:#FFF6D6;--line:#E3D3B5;--leaf2:#9ACB86;--leaf-d:#4CA35A;--wood:#C98A4B;--wood2:#8C5A2B;--paper:#FFFDF6;--green-d:#145A32}
 *{box-sizing:border-box}
@@ -149,6 +149,9 @@ footer{text-align:center;font-size:16px}
 .recitem{border-top:2px solid #EFE6D4;padding:10px 0}
 .updbanner{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;background:var(--soft);border:3px solid var(--sun);border-radius:20px;padding:12px 16px;font-size:18px}
 .updst{font-size:15px;margin-top:4px}
+.updnotes{margin-top:6px;font-size:15px;background:rgba(255,255,255,.6);border-radius:12px;padding:4px 10px}
+.updnotes summary{cursor:pointer;font-weight:800;min-height:32px;display:flex;align-items:center;gap:6px}
+.updnotes ul{margin:4px 0;padding-inline-start:20px}.updnotes p{margin:4px 0}.updnotes .nh{font-weight:800}
 .famcode{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:28px;font-weight:800;letter-spacing:2px;text-align:center;background:var(--soft);border:3px dashed #E0A915;border-radius:16px;padding:10px;user-select:all}
 .rules{direction:ltr;text-align:left;background:var(--ink);color:#DDF3D3;border-radius:14px;padding:12px;font-size:14px;overflow-x:auto}
 #dbUrl,#joinLinkIn{direction:ltr;text-align:left;font-size:15px}
@@ -1313,8 +1316,8 @@ var BADGES=[
  ['streak3','🔥','٣ أيام','استمعت ٣ أيام متتالية',function(k,s){return [s.streak,3];}],
  ['streak7','🔥','أسبوع كامل','استمعت ٧ أيام متتالية',function(k,s){return [s.streak,7];}],
  ['streak30','💎','شهر كامل','استمعت ٣٠ يوماً متتالياً',function(k,s){return [s.streak,30];}],
- ['quiz1','📝','أول اختبار','نجحت في اختبار بستان',function(k,s){return [Object.keys(k.quiz).filter(function(z){return k.quiz[z]>=7;}).length,1];}],
- ['quiz10','🎯','العلامة الكاملة','حصلت على ١٠/١٠ في اختبار',function(k,s){return [Object.keys(k.quiz).filter(function(z){return k.quiz[z]>=10;}).length,1];}],
+ ['quiz1','📝','أول اختبار','نجحت في اختبار بستان (٨٠٪)',function(k,s){return [ZONES.filter(function(z,zi){return quizPassed(k,zi);}).length,1];}],
+ ['quiz10','🎯','العلامة الكاملة','حصلت على ١٠٠٪ في اختبار',function(k,s){return [Object.keys(k.quizPct||{}).filter(function(z){return k.quizPct[z]>=100;}).length+Object.keys(k.quiz).filter(function(z){return k.quiz[z]>=15;}).length,1];}],
  ['review10','🔁','مراجع نشيط','راجعت ١٠ مرات',function(k,s){return [k.revCount||0,10];}],
  ['meaning5','📖','أفهم ما أحفظ','قرأت معنى ٥ سور',function(k,s){return [Object.keys(k.meant).length,5];}],
  ['story10','📜','حكواتي','قرأت معنى ١٥ سورة',function(k,s){return [Object.keys(k.meant).length,15];}],
@@ -1436,19 +1439,94 @@ function planTabHtml(){
 function hijri(d){try{return new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura',{day:'numeric',month:'long',year:'numeric'}).format(d);}catch(e){return '';}}
 function certList(k){
   var out=[];ZONES.forEach(function(z,zi){if(z.nums.length>1&&z.nums.every(function(n){return k.prog[n]===3;}))out.push({type:'zone',zi:zi,date:k.zd[zi]||''});});
+  Object.keys(k.quizCert||{}).forEach(function(zi){var q=k.quizCert[zi];out.push({type:'quiz',zi:+zi,date:q.date,pct:q.pct});});
   ORDER.forEach(function(n){if(k.prog[n]===3)out.push({type:'surah',n:n,date:k.memAt[n]||''});});
   return out;
 }
 var CERT=null;
 function loadImg(src){return new Promise(function(res){if(!src)return res(null);var im=new Image();im.onload=function(){res(im);};im.onerror=function(){res(null);};im.src=src;});}
+/* juz number per garden zone (zone 6 spans the end of juz 22 to juz 25) */
+var ZONE_JUZ={1:'٣٠',2:'٢٩',3:'٢٨',4:'٢٧',5:'٢٦',6:'٢٢ – ٢٥'};
+function wrapLines(x,text,maxW){var words=String(text).split(' '),lines=[],cur='';words.forEach(function(w){var t=cur?cur+' '+w:w;if(x.measureText(t).width>maxW&&cur){lines.push(cur);cur=w;}else cur=t;});if(cur)lines.push(cur);return lines;}
+function drawJuzCert(c,k,photo){
+  var W=1600,H=1131,cv=document.createElement('canvas');cv.width=W;cv.height=H;var x=cv.getContext('2d');
+  var G='#14532D',G2='#1E7A45',GOLD='#C9A227',GOLD2='#E8C766',INK='#2B2B2B',girl=k.gender==='f';
+  var d=c.date?dateFromKey(c.date):new Date();
+  // background: warm paper with soft light
+  var bg=x.createRadialGradient(W/2,H/2,100,W/2,H/2,900);bg.addColorStop(0,'#FFFDF5');bg.addColorStop(1,'#F6EDD6');x.fillStyle=bg;x.fillRect(0,0,W,H);
+  // faint geometric pattern
+  x.save();x.globalAlpha=.06;x.strokeStyle=G;x.lineWidth=2;
+  for(var py=60;py<H;py+=90)for(var px=60;px<W;px+=90){x.save();x.translate(px,py);x.strokeRect(-18,-18,36,36);x.rotate(Math.PI/4);x.strokeRect(-18,-18,36,36);x.restore();}
+  x.restore();
+  // frames
+  x.fillStyle=G;x.fillRect(0,0,W,26);x.fillRect(0,H-26,W,26);x.fillRect(0,0,26,H);x.fillRect(W-26,0,26,H);
+  x.strokeStyle=GOLD;x.lineWidth=6;x.strokeRect(44,44,W-88,H-88);x.lineWidth=2;x.strokeRect(58,58,W-116,H-116);
+  function star8(cx,cy,r,fill,stroke){x.save();x.translate(cx,cy);x.fillStyle=fill;for(var i=0;i<2;i++){x.save();x.rotate(i*Math.PI/4);x.fillRect(-r,-r,r*2,r*2);if(stroke){x.strokeStyle=stroke;x.lineWidth=2;x.strokeRect(-r,-r,r*2,r*2);}x.restore();}x.restore();}
+  for(var bx=110;bx<W-60;bx+=70){star8(bx,51,7,GOLD);star8(bx,H-51,7,GOLD);}
+  for(var by=110;by<H-60;by+=70){star8(51,by,7,GOLD);star8(W-51,by,7,GOLD);}
+  [[90,90],[W-90,90],[90,H-90],[W-90,H-90]].forEach(function(p){star8(p[0],p[1],34,G2,GOLD);star8(p[0],p[1],18,GOLD2);star8(p[0],p[1],7,G);});
+  // mihrab arch behind the title
+  x.save();x.strokeStyle=GOLD;x.lineWidth=4;x.fillStyle='rgba(30,122,69,.06)';x.beginPath();
+  x.moveTo(470,300);x.lineTo(470,200);x.bezierCurveTo(470,120,700,110,800,52);x.bezierCurveTo(900,110,1130,120,1130,200);x.lineTo(1130,300);x.closePath();x.fill();x.stroke();x.restore();
+  star8(800,92,12,GOLD);
+  x.direction='rtl';x.textAlign='center';x.textBaseline='middle';
+  x.fillStyle=G;x.font='72px "Amiri Quran", "Amiri", serif';x.fillText('شَهَادَةُ تَقْدِيرٍ وَتَمَيُّزٍ',W/2,185);
+  x.fillStyle=GOLD;x.font='600 40px "Amiri", "Amiri Quran", serif';x.fillText('في حفظ القرآن الكريم',W/2,262);
+  // ornament line
+  x.strokeStyle=GOLD;x.lineWidth=3;x.beginPath();x.moveTo(560,312);x.lineTo(760,312);x.moveTo(840,312);x.lineTo(1040,312);x.stroke();star8(800,312,9,G2);
+  x.fillStyle=INK;x.font='500 36px "Baloo Bhaijaan 2", sans-serif';
+  x.fillText('بكل فخرٍ واعتزاز، نُقدِّم هذه الشهادة إلى '+(girl?'ابنتنا الحبيبة':'ابننا الحبيب'),W/2,372);
+  // name on a gold ribbon
+  x.font='800 78px "Baloo Bhaijaan 2", sans-serif';var nw=Math.min(900,Math.max(380,x.measureText(k.name).width+160));
+  x.fillStyle=GOLD2;x.beginPath();x.moveTo(W/2-nw/2-30,455);x.lineTo(W/2-nw/2,412);x.lineTo(W/2+nw/2,412);x.lineTo(W/2+nw/2+30,455);x.lineTo(W/2+nw/2,498);x.lineTo(W/2-nw/2,498);x.closePath();x.fill();
+  x.fillStyle=G;x.fillText(k.name,W/2,458);
+  x.fillStyle=INK;x.font='500 36px "Baloo Bhaijaan 2", sans-serif';
+  x.fillText(girl?'تقديرًا لاجتهادها ومثابرتها في حفظ':'تقديرًا لاجتهاده ومثابرته في حفظ',W/2,548);
+  var juz=ZONE_JUZ[c.zi]||'';x.font='800 50px "Baloo Bhaijaan 2", sans-serif';
+  var pre='الجزء (',post=') من القرآن الكريم',wp=x.measureText(pre).width,wj=x.measureText(juz).width,wq=x.measureText(post).width,tot=wp+wj+wq,sx=W/2+tot/2;
+  x.textAlign='right';x.fillStyle=G;x.fillText(pre,sx,612);x.fillStyle='#B5367A';x.fillText(juz,sx-wp,612);x.fillStyle=G;x.fillText(post,sx-wp-wj,612);x.textAlign='center';
+  x.fillStyle='#5B4A33';x.font='500 26px "Baloo Bhaijaan 2", sans-serif';x.fillText('('+ZONES[c.zi].sub+')',W/2,656);
+  x.fillStyle=INK;x.font='500 32px "Baloo Bhaijaan 2", sans-serif';
+  var prayer='سائلين الله أن يجعل القرآن العظيم نورًا '+(girl?'لقلبها، وضياءً لصدرها، ورفعةً لها':'لقلبه، وضياءً لصدره، ورفعةً له')+' في الدنيا والآخرة.';
+  wrapLines(x,prayer,1080).forEach(function(l,i){x.fillText(l,W/2,710+i*44);});
+  // dua box
+  var bxY=790,bxH=170;x.fillStyle='rgba(30,122,69,.07)';x.strokeStyle=GOLD;x.lineWidth=3;
+  x.beginPath();if(x.roundRect)x.roundRect(260,bxY,W-520,bxH,26);else x.rect(260,bxY,W-520,bxH);x.fill();x.stroke();
+  x.fillStyle=GOLD;x.font='800 28px "Baloo Bhaijaan 2", sans-serif';x.fillText('🤲 الدعاء الخاص بهذه الشهادة',W/2,bxY+34);
+  x.fillStyle=G;x.font='34px "Amiri", "Amiri Quran", serif';
+  var dua=girl?'اللهم بارك لها فيما حفظت، وثبِّته في صدرها، وافتح عليها فتوح العارفين، واجعلها من أهل القرآن الذين هم أهلك وخاصتك.':
+    'اللهم بارك له فيما حفظ، وثبِّته في صدره، وافتح عليه فتوح العارفين، واجعله من أهل القرآن الذين هم أهلك وخاصتك.';
+  wrapLines(x,dua,W-620).forEach(function(l,i){x.fillText(l,W/2,bxY+86+i*46);});
+  // footer: date (right) + father's signature (left)
+  var dl=d.toLocaleDateString('ar-EG',{day:'numeric',month:'long',year:'numeric'}),hj=hijri(d);
+  x.font='600 28px "Baloo Bhaijaan 2", sans-serif';x.fillStyle=INK;x.textAlign='right';
+  x.fillText('التاريخ: '+dl,W-150,1010);if(hj){x.font='500 22px "Baloo Bhaijaan 2", sans-serif';x.fillStyle='#5B4A33';x.fillText('الموافق '+hj,W-150,1046);}
+  x.textAlign='left';x.font='600 28px "Baloo Bhaijaan 2", sans-serif';x.fillStyle=INK;
+  var sg=D.set.certSigner||'';x.fillText('توقيع الوالد: '+(sg||'....................'),150,1010);
+  x.strokeStyle=GOLD;x.lineWidth=2;x.beginPath();x.moveTo(150,1040);x.lineTo(520,1040);x.stroke();
+  // side medallions: photo (right) + score seal (left)
+  x.textAlign='center';
+  function medal(cx,cy){x.save();x.translate(cx,cy);for(var i=0;i<24;i++){x.rotate(Math.PI/12);x.fillStyle=i%2?GOLD:GOLD2;x.beginPath();x.moveTo(0,-92);x.lineTo(14,-74);x.lineTo(-14,-74);x.closePath();x.fill();}x.restore();
+    x.beginPath();x.arc(cx,cy,78,0,7);x.fillStyle=G2;x.fill();x.lineWidth=6;x.strokeStyle=GOLD2;x.stroke();}
+  medal(W-245,470);x.save();x.beginPath();x.arc(W-245,470,70,0,7);x.clip();
+  if(photo)x.drawImage(photo,W-315,400,140,140);else{x.fillStyle='#FFF1C9';x.fillRect(W-315,400,140,140);x.font='80px serif';x.fillStyle='#000';x.fillText(k.avatar||'🌸',W-245,476);}x.restore();
+  medal(245,470);x.fillStyle='#fff';
+  if(c.type==='quiz'&&c.pct!=null){x.font='800 46px "Baloo Bhaijaan 2", sans-serif';x.fillText(ar(c.pct)+'٪',245,452);x.font='700 26px "Baloo Bhaijaan 2", sans-serif';
+    x.fillText(c.pct>=95?'ممتاز مرتفع':c.pct>=90?'ممتاز':'جيد جداً',245,500);}
+  else{x.font='800 34px "Baloo Bhaijaan 2", sans-serif';x.fillText('أتمّ',245,450);x.fillText('الحفظ',245,494);}
+  x.fillStyle=G2;x.font='600 22px "Baloo Bhaijaan 2", sans-serif';x.fillText('🌸 حديقة القرآن',W/2,1060);
+  return cv.toDataURL('image/png');
+}
 function drawCert(c){
   var k=K(),W=1600,H=1131,cv=document.createElement('canvas');cv.width=W;cv.height=H;var x=cv.getContext('2d');
   var green=getComputedStyle(document.body).getPropertyValue('--green').trim()||'#1E7A45',sun='#C9A227';
-  var title=c.type==='zone'?ZONES[c.zi].title.split(' —')[0]:'سورة '+SURAHS[c.n][0];
+  var title=c.type==='surah'?'سورة '+SURAHS[c.n][0]:ZONES[c.zi].title.split(' —')[0];
+  if(c.type==='quiz'&&c.pct==null){var qc=(k.quizCert||{})[c.zi]||{};c.pct=qc.pct;c.date=c.date||qc.date;}
   var girl=k.gender==='f',d=c.date?dateFromKey(c.date):new Date();
-  return Promise.all([document.fonts&&document.fonts.load?Promise.all([document.fonts.load('64px "Amiri Quran"'),document.fonts.load('800 40px "Baloo Bhaijaan 2"')]).catch(function(){}):0,
+  return Promise.all([document.fonts&&document.fonts.load?Promise.all([document.fonts.load('64px "Amiri Quran"'),document.fonts.load('34px "Amiri"'),document.fonts.load('800 40px "Baloo Bhaijaan 2"')]).catch(function(){}):0,
       loadImg(k.photo&&/^data:image\//.test(k.photo)?k.photo:null)]).then(function(r){
     var photo=r[1];
+    if(c.type==='zone'||c.type==='quiz')return drawJuzCert(c,k,photo);
     x.fillStyle='#FFFDF6';x.fillRect(0,0,W,H);
     // borders + corner stars
     x.strokeStyle=green;x.lineWidth=18;x.strokeRect(30,30,W-60,H-60);
@@ -1458,19 +1536,20 @@ function drawCert(c){
     [[120,120],[W-120,120],[120,H-120],[W-120,H-120]].forEach(function(p){star(p[0],p[1],38,sun);star(p[0],p[1],16,green);});
     x.direction='rtl';x.textAlign='center';x.textBaseline='middle';
     x.fillStyle=green;x.font='64px "Amiri Quran", "Amiri", serif';x.fillText('بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ',W/2,170);
-    x.fillStyle='#1F3A2E';x.font='800 92px "Baloo Bhaijaan 2", sans-serif';x.fillText('شهادة إتمام حفظ',W/2,290);
+    x.fillStyle='#1F3A2E';x.font='800 92px "Baloo Bhaijaan 2", sans-serif';x.fillText(c.type==='quiz'?'شهادة اجتياز اختبار':'شهادة إتمام حفظ',W/2,290);
     // photo / avatar circle
     var cx=W/2,cy=455,R=95;x.save();x.beginPath();x.arc(cx,cy,R,0,7);x.closePath();x.fillStyle='#FFF1C9';x.fill();x.clip();
     if(photo)x.drawImage(photo,cx-R,cy-R,R*2,R*2);else{x.font='120px serif';x.fillText(k.avatar||'🌸',cx,cy+8);}
     x.restore();x.lineWidth=10;x.strokeStyle=sun;x.beginPath();x.arc(cx,cy,R+4,0,7);x.stroke();
     x.fillStyle='#3A4A40';x.font='600 42px "Baloo Bhaijaan 2", sans-serif';
-    x.fillText('نشهد بكل فخر بأنّ '+(girl?'البطلة':'البطل'),W/2,605);
-    x.fillStyle=green;x.font='800 86px "Baloo Bhaijaan 2", sans-serif';x.fillText(k.name,W/2,695);
-    x.fillStyle='#3A4A40';x.font='600 42px "Baloo Bhaijaan 2", sans-serif';x.fillText((girl?'قد أتمّت':'قد أتمّ')+' حفظ',W/2,782);
-    x.fillStyle='#B5367A';x.font='800 74px "Baloo Bhaijaan 2", sans-serif';x.fillText(title,W/2,862);
+    var dy=c.type==='quiz'?-22:0;x.fillText('نشهد بكل فخر بأنّ '+(girl?'البطلة':'البطل'),W/2,605+dy);
+    x.fillStyle=green;x.font='800 86px "Baloo Bhaijaan 2", sans-serif';x.fillText(k.name,W/2,695+dy);
+    x.fillStyle='#3A4A40';x.font='600 42px "Baloo Bhaijaan 2", sans-serif';x.fillText(c.type==='quiz'?(girl?'قد اجتازت بنجاح اختبار':'قد اجتاز بنجاح اختبار'):(girl?'قد أتمّت':'قد أتمّ')+' حفظ',W/2,782+dy);
+    x.fillStyle='#B5367A';x.font='800 74px "Baloo Bhaijaan 2", sans-serif';x.fillText(title,W/2,862+dy);
+    if(c.type==='quiz'&&c.pct!=null){x.fillStyle='#1E7A45';x.font='800 40px "Baloo Bhaijaan 2", sans-serif';x.fillText('بنسبة '+ar(c.pct)+'٪ '+(c.pct>=95?'— بتقدير ممتاز مرتفع 🌟':c.pct>=90?'— بتقدير ممتاز':'— بتقدير جيد جداً'),W/2,918);}
     x.fillStyle='#5B4A33';x.font='500 32px "Baloo Bhaijaan 2", sans-serif';
     var dl=d.toLocaleDateString('ar-EG',{day:'numeric',month:'long',year:'numeric'}),hj=hijri(d);
-    x.fillText(dl+(hj?'  ·  '+hj:''),W/2,935);
+    x.fillText(dl+(hj?'  ·  '+hj:''),W/2,c.type==='quiz'?968:935);
     x.font='600 34px "Baloo Bhaijaan 2", sans-serif';x.fillStyle='#1F3A2E';
     x.textAlign='right';x.fillText('التوقيع: '+(D.set.certSigner||'والداك المحبّان'),W-180,1015);
     x.textAlign='left';x.fillText('🌸 حديقة القرآن',180,1015);
@@ -1489,7 +1568,7 @@ function openCert(c){
       (window.AndroidBridge?'':'<button class="btn alt" data-certprint>🖨️ طباعة</button>')+'</div>';
   });
 }
-function certFile(){var c=CERT.c;return 'quran-garden-'+(c.type==='zone'?'juz-'+c.zi:'surah-'+c.n)+'.png';}
+function certFile(){var c=CERT.c;return 'quran-garden-'+(c.type==='surah'?'surah-'+c.n:(c.type==='quiz'?'test-':'juz-')+c.zi)+'.png';}
 function certShare(){
   if(!CERT||!CERT.url)return;var b64=CERT.url.split(',')[1];
   if(window.AndroidBridge&&AndroidBridge.shareImage){try{AndroidBridge.shareImage(certFile(),b64);}catch(e){toast('تعذّرت المشاركة');}return;}
@@ -1511,8 +1590,8 @@ function certPrint(){
 function certsSectionHtml(k){
   var L=certList(k);
   return '<h3 style="margin:18px 0 8px">📜 شهاداتي</h3>'+(L.length?'<div class="certgrid">'+L.map(function(c){
-    var t=c.type==='zone'?'🏆 '+ZONES[c.zi].title.split(' —')[0]:'🌸 سورة '+SURAHS[c.n][0];
-    return '<button class="certitem" data-cert="'+(c.type==='zone'?'z'+c.zi:'s'+c.n)+'"><b>'+t+'</b><small>'+(c.date||'')+'</small></button>';}).join('')+'</div>':
+    var t=c.type==='zone'?'🏆 '+ZONES[c.zi].title.split(' —')[0]:c.type==='quiz'?'📝 اختبار '+ZONES[c.zi].title.split(' —')[0]+' '+ar(c.pct)+'٪':'🌸 سورة '+SURAHS[c.n][0];
+    return '<button class="certitem" data-cert="'+(c.type==='zone'?'z'+c.zi:c.type==='quiz'?'q'+c.zi:'s'+c.n)+'"><b>'+t+'</b><small>'+(c.date||'')+'</small></button>';}).join('')+'</div>':
     '<p class="note">احفظ أول سورة لتحصل على أول شهادة! 🌱</p>');
 }
 
@@ -1668,33 +1747,36 @@ function fetchTextP(s){
 function openQuiz(zi){
   var z=ZONES[zi],k=K(),pool=z.nums.filter(function(n){return (k.prog[n]||0)>=2;});
   if(pool.length<2)pool=z.nums.slice();
-  pool=shuffle(pool.slice()).slice(0,8);
+  pool=shuffle(pool.slice()).slice(0,12);
   Q={zi:zi,qs:[],i:0,score:0,done:false,loading:true};drawQuiz();document.getElementById('quizOv').hidden=false;
   Promise.all(pool.map(function(s){return fetchTextP(s).catch(function(){return null;});})).then(function(){
     Q.qs=makeQuestions(z,pool);Q.loading=false;drawQuiz();
   });
 }
+var QUIZ_N=15,QUIZ_PASS=0.8;
+function quizPassed(k,zi){return (k.quizPct&&k.quizPct[zi]>=80)||(!(k.quizPct&&k.quizPct[zi]!=null)&&k.quiz[zi]>=8);}
 function makeQuestions(z,pool){
   var withText=pool.filter(function(s){return textCache[s];}),qs=[],guard=0;
   var zoneNums=z.nums.length>=4?z.nums:ORDER.slice(0,40);
   function others(n,cnt,from){return shuffle(from.filter(function(x){return x!==n;})).slice(0,cnt);}
-  while(qs.length<10&&guard++<200){
+  var seenQ={};function addQ(q){var key=q.t+'|'+(q.q||'')+'|'+(q.audio?q.audio.join(':'):'')+'|'+q.o[q.a];if(seenQ[key])return;seenQ[key]=1;qs.push(q);}
+  while(qs.length<QUIZ_N&&guard++<600){
     var types=['next','count'];if(withText.length){types.push('complete','complete','which','which','listen');}
     var t=pick(types);
     if(t==='next'){var n=pick(pool.filter(function(x){return x<114&&x!==1;}).concat(pool));if(n>=114)continue;var nx=n+1;if(!SURAHS[nx])continue;
       var opts=shuffle([nx].concat(others(nx,3,zoneNums.concat(ORDER.slice(0,20))).filter(function(x){return x!==n;}).slice(0,3)));
-      qs.push({t:'ما السورة التي تأتي بعد سورة '+SURAHS[n][0]+' في المصحف؟',o:opts.map(function(x){return 'سورة '+SURAHS[x][0];}),a:opts.indexOf(nx)});}
+      addQ({t:'ما السورة التي تأتي بعد سورة '+SURAHS[n][0]+' في المصحف؟',o:opts.map(function(x){return 'سورة '+SURAHS[x][0];}),a:opts.indexOf(nx)});}
     else if(t==='count'){var c=pick(pool),v=SURAHS[c][1],set=[v];while(set.length<4){var d=v+(Math.floor(Math.random()*9)-4);if(d>0&&set.indexOf(d)<0)set.push(d);}
-      shuffle(set);qs.push({t:'كم عدد آيات سورة '+SURAHS[c][0]+'؟',o:set.map(function(x){return ar(x)+' آيات';}),a:set.indexOf(v)});}
+      shuffle(set);addQ({t:'كم عدد آيات سورة '+SURAHS[c][0]+'؟',o:set.map(function(x){return ar(x)+' آيات';}),a:set.indexOf(v)});}
     else if(t==='complete'){var s=pick(withText),T=textCache[s],ays=Object.keys(T).filter(function(a){return T[a].length>=4;});if(!ays.length)continue;
       var a=pick(ays),W=T[a],cut=Math.ceil(W.length/2),right=W.slice(cut).join(' '),wrong=[];
       var guard2=0;while(wrong.length<2&&guard2++<40){var s2=pick(withText),T2=textCache[s2],k2=pick(Object.keys(T2)),W2=T2[k2];if(W2.length<4)continue;var e=W2.slice(Math.ceil(W2.length/2)).join(' ');if(e!==right&&wrong.indexOf(e)<0)wrong.push(e);}
       if(wrong.length<2)continue;var op=shuffle([right].concat(wrong));
-      qs.push({t:'أكمل الآية من سورة '+SURAHS[s][0]+':',q:W.slice(0,cut).join(' ')+' …',o:op,a:op.indexOf(right),quran:true});}
+      addQ({t:'أكمل الآية من سورة '+SURAHS[s][0]+':',q:W.slice(0,cut).join(' ')+' …',o:op,a:op.indexOf(right),quran:true});}
     else if(t==='which'||t==='listen'){var s3=pick(withText),T3=textCache[s3],ks=Object.keys(T3).filter(function(a){return T3[a].length<=14;});if(!ks.length)continue;
       var a3=+pick(ks),cands=pool.length>=4?pool:zoneNums,op3=shuffle([s3].concat(others(s3,3,cands)));
       if(op3.length<3)continue;
-      qs.push({t:t==='listen'?'🎧 استمع إلى الآية: من أي سورة هي؟':'من أي سورة هذه الآية؟',q:t==='listen'?null:T3[a3].join(' '),audio:t==='listen'?[s3,a3]:null,
+      addQ({t:t==='listen'?'🎧 استمع إلى الآية: من أي سورة هي؟':'من أي سورة هذه الآية؟',q:t==='listen'?null:T3[a3].join(' '),audio:t==='listen'?[s3,a3]:null,
         o:op3.map(function(x){return 'سورة '+SURAHS[x][0];}),a:op3.indexOf(s3),quran:t!=='listen'});}
   }
   return qs;
@@ -1704,14 +1786,16 @@ function drawQuiz(){
   if(Q.loading){b.innerHTML='<h2>📝 اختبار '+z.title+'</h2><p style="font-size:19px">جارٍ تجهيز الأسئلة…</p>';return;}
   if(!Q.qs.length){b.innerHTML='<h2>📝 اختبار</h2><p>تعذّر تجهيز الأسئلة، تأكد من الاتصال بالإنترنت.</p><button class="btn" data-close="quizOv">إغلاق</button>';return;}
   if(Q.done){
-    var k=K(),pts=Q.score*10,pass=Q.score>=Math.ceil(Q.qs.length*0.7),firstPass=pass&&!(k.quiz[Q.zi]>=Math.ceil(Q.qs.length*0.7)),bonus=firstPass?50:0;
-    if(!Q.saved){Q.saved=true;k.quiz[Q.zi]=Math.max(k.quiz[Q.zi]||0,Q.score);addPts(k,pts+bonus,'اختبار '+z.title+' ('+Q.score+'/'+Q.qs.length+')');save();render();
-      if(pass){chime([523,659,784,1047]);confetti(160);}else chime([440,523]);}
+    var k=K(),pts=Q.score*10,pct=Math.round(Q.score*100/Q.qs.length),need=Math.ceil(Q.qs.length*QUIZ_PASS),pass=Q.score>=need,firstPass=pass&&!quizPassed(k,Q.zi),bonus=firstPass?50:0;
+    if(!Q.saved){Q.saved=true;k.quizPct=k.quizPct||{};k.quizPct[Q.zi]=Math.max(k.quizPct[Q.zi]||0,pct);k.quiz[Q.zi]=Math.max(k.quiz[Q.zi]||0,Q.score);
+      if(pass){k.quizCert=k.quizCert||{};if(!k.quizCert[Q.zi]||k.quizCert[Q.zi].pct<pct)k.quizCert[Q.zi]={date:dkey(),pct:pct,score:Q.score,n:Q.qs.length};}
+      addPts(k,pts+bonus,'اختبار '+z.title+' ('+Q.score+'/'+Q.qs.length+')');save();render();
+      if(pass){chime([523,659,784,1047]);confetti(160);var zq=Q.zi;setTimeout(function(){openCert({type:'quiz',zi:zq,date:dkey(),pct:pct});},1600);}else chime([440,523]);}
     b.innerHTML='<div class="cheer"><div class="em">'+(pass?'🏅':'💪')+'</div><h2>'+(pass?'نجحت في الاختبار!':'محاولة جيدة!')+'</h2>'+
-      '<p style="font-size:22px;margin:4px 0">النتيجة: <b>'+ar(Q.score)+' / '+ar(Q.qs.length)+'</b></p>'+
+      '<p style="font-size:22px;margin:4px 0">النتيجة: <b>'+ar(Q.score)+' / '+ar(Q.qs.length)+'</b> ('+ar(pct)+'٪)</p>'+
       '<p style="font-size:20px;margin:4px 0 18px">ربحت <b>'+ar(pts+bonus)+' نقطة ⭐</b>'+(bonus?' (منها ٥٠ مكافأة أول نجاح)':'')+'</p>'+
-      (pass?'':'<p class="note" style="font-size:16px">راجع السور ثم جرّب مرة أخرى. النجاح من ٧ إجابات صحيحة.</p>')+
-      '<div class="row" style="justify-content:center"><button class="btn" data-quiz="'+Q.zi+'">اختبار جديد</button><button class="btn alt" data-close="quizOv">رجوع</button></div></div>';
+      (pass?'<p style="font-size:18px;margin:0 0 12px">📜 تستحق شهادة النجاح!</p>':'<p class="note" style="font-size:16px">راجع السور ثم جرّب مرة أخرى. النجاح من '+ar(need)+' إجابات صحيحة (٨٠٪).</p>')+
+      '<div class="row" style="justify-content:center">'+(pass?'<button class="btn" data-cert="q'+Q.zi+'">📜 اطبع شهادتي</button>':'')+'<button class="btn'+(pass?' alt':'')+'" data-quiz="'+Q.zi+'">اختبار جديد</button><button class="btn alt" data-close="quizOv">رجوع</button></div></div>';
     return;
   }
   var q=Q.qs[Q.i];
@@ -1765,7 +1849,7 @@ function renderGarden(){
     ['بذرة — لم أبدأ','نبتة — سمعت كل آية '+ar(D.set.t1)+' مرة','برعم — '+ar(D.set.t2)+' مرات','زهرة — '+ar(D.set.t3)+' مرات'+(D.set.approve?' + تسميع للوالدين':'')].map(function(l,i){return '<span>'+plantSvg(i,0,34)+l+'</span>';}).join('')+'</section>';
   var zones=ZONES.map(function(z,zi){
     var done=z.nums.filter(function(n){return (p[n]||0)===3;}).length,full=done===z.nums.length,best=K().quiz[zi];
-    var quizBtn=z.nums.length>1?'<button class="qbtn" data-quiz="'+zi+'">📝 اختبار البستان'+(best!=null?' · أفضل نتيجة '+ar(best)+'/١٠':'')+'</button>':'';
+    var quizBtn=z.nums.length>1?'<button class="qbtn" data-quiz="'+zi+'">📝 اختبار البستان'+((K().quizPct||{})[zi]!=null?' · أفضل نتيجة '+ar(K().quizPct[zi])+'٪'+(quizPassed(K(),zi)?' ✅':''):best!=null?' · أفضل نتيجة '+ar(best)+'/١٠':'')+'</button>':'';
     var tiles=z.nums.map(function(n){
       var s=p[n]||0,t=TILE[s],goal=n===36,kk=K();
       if(!allowed(kk,n))return '<div class="tile locked" style="background:#F1ECE2;border-color:#D8CCB4"><span class="num">'+ar(n)+'</span><span class="plant" style="font-size:40px">🔒</span><span class="name">'+SURAHS[n][0]+'</span><span style="font-size:14px">تُفتح قريباً</span></div>';
@@ -1983,6 +2067,7 @@ function renderParent(){
           '<div class="note" style="margin-top:8px"><b>المدفوعات:</b><br>'+(k.payouts.slice(0,5).map(function(p){return p.d+' · '+ar(p.p)+' نقطة = '+ar(p.m)+' '+esc(p.c);}).join('<br>')||'—')+'</div></div>';
       }).join('')+'</div>';
   }
+  if(PT==='backup'&&!HIST.list&&!HIST.loading){HIST.loading=true;loadHistory().then(function(){HIST.loading=false;if(PT==='backup'&&!document.getElementById('parentOv').hidden)renderParent();});}
   if(PT==='backup'){
     body='<div class="box"><h3>تصدير</h3><p class="note">احفظ ملفاً بكل التقدّم والإعدادات، أو انقله لجهاز آخر.</p><button class="btn" data-export>تنزيل نسخة احتياطية</button></div>'+
       '<div class="box"><h3>استيراد</h3><p class="note">سيستبدل كل البيانات الحالية على هذا الجهاز.</p><button class="btn alt" data-import>اختيار ملف…</button></div>'+
@@ -2035,6 +2120,7 @@ document.addEventListener('click',function(e){
     pkk.planCfg={to:to,deadline:dl,start:dkey()};pkk.planPos=null;pkk.planDay=null;pkk.planCfg.startRem=planRemaining(pkk);if(to+1>pkk.plan)pkk.plan=to+1;
     save();render();renderParent();toast('📅 تم حفظ الخطة');return;}
   if(ds.planstop!=null){var ps=D.kids[+ds.planstop];ps.planCfg=null;ps.planDay=null;save();render();renderParent();toast('تم إيقاف الخطة');return;}
+  if(ds.cert&&ds.cert.charAt(0)==='q'){document.getElementById('quizOv').hidden=true;var qz=+ds.cert.slice(1),qcc=(K().quizCert||{})[qz]||{};openCert({type:'quiz',zi:qz,date:qcc.date||dkey(),pct:qcc.pct});return;}
   if(ds.cert){var cv=ds.cert;openCert(cv.charAt(0)==='z'?{type:'zone',zi:+cv.slice(1),date:K().zd[+cv.slice(1)]||''}:{type:'surah',n:+cv.slice(1),date:K().memAt[+cv.slice(1)]||''});return;}
   if(ds.certshare!=null){certShare();return;}
   if(ds.certsave!=null){certSave();return;}
@@ -2315,15 +2401,36 @@ function updCheck(force){
   if(!isAndroidApp())return Promise.resolve();
   try{UPD.cur=AndroidBridge.versionCode();}catch(e){}
   var cache=null;try{cache=JSON.parse(localStorage.getItem('qg-upd')||'null');}catch(e){}
-  if(!force&&cache&&Date.now()-cache.t<6*3600e3){Object.assign(UPD,{latest:cache.n,url:cache.u,notes:cache.m,checked:cache.t});updRefresh();return Promise.resolve();}
+  if(!force&&cache&&Date.now()-cache.t<6*3600e3){Object.assign(UPD,{latest:cache.n,url:cache.u,notes:cache.m,body:cache.b||'',checked:cache.t});updRefresh();return Promise.resolve();}
   return fetch('https://api.github.com/repos/'+UPD_REPO+'/releases/latest',{headers:{Accept:'application/vnd.github+json'}})
     .then(function(r){if(!r.ok)throw r.status;return r.json();})
     .then(function(j){
       var m=/^v?\d+\.(\d+)$/.exec(j.tag_name||''),a=(j.assets||[]).filter(function(x){return /\.apk$/i.test(x.name);})[0];
-      UPD.latest=m?+m[1]:0;UPD.url=a?a.browser_download_url:'';UPD.notes=j.name||'';UPD.checked=Date.now();UPD.err='';
-      try{localStorage.setItem('qg-upd',JSON.stringify({n:UPD.latest,u:UPD.url,m:UPD.notes,t:UPD.checked}));}catch(e){}
+      UPD.latest=m?+m[1]:0;UPD.url=a?a.browser_download_url:'';UPD.notes=j.name||'';UPD.body=String(j.body||'').slice(0,4000);UPD.checked=Date.now();UPD.err='';
+      try{localStorage.setItem('qg-upd',JSON.stringify({n:UPD.latest,u:UPD.url,m:UPD.notes,b:UPD.body,t:UPD.checked}));}catch(e){}
       updRefresh();
     }).catch(function(e){UPD.err='تعذّر التحقق من التحديثات ('+e+')';updRefresh();});
+}
+function notesHtml(md){
+  var out='',inList=false;String(md||'').split(/\r?\n/).forEach(function(l){
+    l=l.trim();if(!l){if(inList){out+='</ul>';inList=false;}return;}
+    var li=/^[-*•]\s+(.*)$/.exec(l),hd=/^#{1,4}\s+(.*)$/.exec(l);
+    var txt=function(s){return esc(s).replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>');};
+    if(li){if(!inList){out+='<ul>';inList=true;}out+='<li>'+txt(li[1])+'</li>';}
+    else{if(inList){out+='</ul>';inList=false;}out+=hd?'<p class="nh">'+txt(hd[1])+'</p>':'<p>'+txt(l)+'</p>';}
+  });
+  if(inList)out+='</ul>';return out;
+}
+var HIST={list:null,err:''};
+function loadHistory(){
+  return fetch('https://api.github.com/repos/'+UPD_REPO+'/releases?per_page=10',{headers:{Accept:'application/vnd.github+json'}})
+    .then(function(r){if(!r.ok)throw r.status;return r.json();}).then(function(j){HIST.list=j.map(function(x){return {tag:x.tag_name,date:String(x.published_at||'').slice(0,10),body:x.body||''};});HIST.err='';})
+    .catch(function(e){HIST.err='تعذّر تحميل سجل التحديثات ('+e+')';});
+}
+function historyHtml(){
+  if(!HIST.list)return '<p class="note">'+(HIST.err||'⏳ جارٍ التحميل…')+'</p>';
+  return HIST.list.map(function(r){var m=/^v?\d+\.(\d+)$/.exec(r.tag),n=m?+m[1]:0;
+    return '<details class="updnotes"'+(n===UPD.cur?' open':'')+'><summary><b dir="ltr">'+esc(r.tag)+'</b> · '+esc(r.date)+(n===UPD.cur?' ← المثبّت عندك':n>UPD.cur&&UPD.cur?' 🆕':'')+'</summary>'+notesHtml(r.body)+'</details>';}).join('');
 }
 function updAvailable(){return isAndroidApp()&&UPD.latest>UPD.cur&&!!UPD.url;}
 function updStatusText(){
@@ -2337,6 +2444,8 @@ function updBannerHtml(){
   if(!updAvailable())return '';
   var st=updStatusText();
   return '<section class="updbanner" role="status"><div><b>🎁 تحديث جديد متوفر!</b> <span dir="ltr">v1.'+UPD.latest+'</span>'+
+    '<div class="updst">الإصدار الحالي <b dir="ltr">v1.'+UPD.cur+'</b> ← الجديد <b dir="ltr">v1.'+UPD.latest+'</b></div>'+
+    (UPD.body?'<details class="updnotes"><summary>✨ ما الجديد؟</summary>'+notesHtml(UPD.body)+'</details>':'')+
     (st?'<div class="updst">'+st+'</div>':'')+'</div>'+
     (UPD.state==='progress'?'':'<button class="pill" style="background:var(--sun);color:var(--ink)" data-update>⬇️ تحديث الآن</button>')+'</section>';
 }
@@ -2347,7 +2456,8 @@ function updateBoxHtml(){
     (updAvailable()?'<p>'+(updStatusText()||'🎁 يوجد تحديث جديد')+'</p><button class="btn" data-update>⬇️ تحديث الآن</button>':
       (UPD.latest?'<p>✅ لديك أحدث إصدار</p>':''))+
     (UPD.err?'<p style="color:#A3262A">'+esc(UPD.err)+'</p>':'')+
-    ' <button class="btn alt" data-updcheck>🔍 التحقق الآن</button></div>';
+    ' <button class="btn alt" data-updcheck>🔍 التحقق الآن</button>'+
+    '<h3 style="margin:16px 0 6px">📋 سجل التحديثات</h3>'+historyHtml()+'</div>';
 }
 function updRefresh(){
   var m=document.getElementById('main'),b=m&&m.querySelector('.updbanner'),html=updBannerHtml();
