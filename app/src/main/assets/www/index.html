@@ -494,7 +494,7 @@ body{transition:background .4s}
         <p class="sub">كل سورة بذرة… استمع، كرّر، احفظ فتصير زهرة!</p>
       </div>
     </div>
-    <div class="topbtns"><button class="parentBtn themeBtn" data-badges aria-label="أوسمتي"><span aria-hidden="true">🏅</span><span class="btxt">أوسمتي</span></button><button class="parentBtn themeBtn" data-themes aria-label="اختر شكل الحديقة"><span aria-hidden="true">🎨</span><span class="btxt">الألوان</span></button>
+    <div class="topbtns"><button class="parentBtn themeBtn" data-logout aria-label="تبديل المستخدم"><span aria-hidden="true">🚪</span><span class="btxt">خروج</span></button><button class="parentBtn themeBtn" data-badges aria-label="أوسمتي"><span aria-hidden="true">🏅</span><span class="btxt">أوسمتي</span></button><button class="parentBtn themeBtn" data-themes aria-label="اختر شكل الحديقة"><span aria-hidden="true">🎨</span><span class="btxt">الألوان</span></button>
     <button class="parentBtn" id="openParent"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M8 10 V7 a4 4 0 0 1 8 0 V10" fill="none" stroke="currentColor" stroke-width="2.4"/></svg><span class="btxt">لوحة الوالدين</span></button></div>
   </div>
   <div class="wrap kids" id="kids" role="group" aria-label="اختر البطل"></div>
@@ -1663,7 +1663,7 @@ function joinByBirthday(fam,dobRaw,btn){try{localStorage.setItem('qg-fam',fam.tr
     if(!j||!j.c||!j.k)throw 'nofound';
     return joinFamily(EMBED,j.c).then(function(){
       document.getElementById('welcomeOv').hidden=true;
-      if(D.kids.some(function(k){return k.id===j.k;})){UNLOCK.ok=true;setRole(j.k);}else openWhoAmI(true);
+      if(D.kids.some(function(k){return k.id===j.k;})){setRole(j.k);}else openWhoAmI(true);
     });
   }).catch(function(e){reset();toast(e==='nofound'?'لم نجد طفلاً بهذا الاسم والتاريخ — تأكد منهما':'تعذّر الاتصال، تأكد من الإنترنت');});
 }
@@ -1673,28 +1673,56 @@ function birthdayJoinHtml(prefix){
     '<div class="row" style="margin-top:12px"><button class="btn" data-dobjoin="'+prefix+'">🎂 ادخل</button></div>';
 }
 /* lock screen on a child's device: birthday every time the app opens */
-var UNLOCK={ok:false,hiddenAt:0};
-function needLock(){return kidLocked()&&!!K().pinHash&&!UNLOCK.ok;}
+/* login every time the app opens: who is it? parent → password, child → birthday */
+var SESS={who:null,kidId:null,hiddenAt:0,pick:null};
+function sessKid(){return SESS.who==='kid'?SESS.kidId:null;}
+function needLock(){return SESS.who===null&&D.kids.length>0&&document.getElementById('welcomeOv').hidden;}
+function loginKids(){return ROLE.role==='kid'&&D.kids.some(function(k){return k.id===ROLE.kidId;})?D.kids.filter(function(k){return k.id===ROLE.kidId;}):D.kids;}
 function showLock(){
-  if(!needLock()){document.getElementById('lockOv').hidden=true;return;}
-  var k=K();
-  document.getElementById('lockBox').innerHTML='<div class="cheer"><div class="av lg" style="margin:0 auto;width:96px;height:96px;flex-basis:96px">'+avInner(k)+'</div>'+
-    '<h2>أهلاً يا '+esc(k.name)+' 👋</h2>'+(D.set.famWord?'<div style="display:inline-block;background:var(--line);border-radius:999px;padding:6px 16px;font-weight:800;margin:0 0 10px">👨‍👩‍👧 عائلة: '+esc(D.set.famWord)+' 🔒</div>':'')+
-    '<p style="font-size:18px;margin:0 0 10px">اكتب تاريخ ميلادك فقط (اليوم-الشهر-السنة)</p>'+
-    '<input id="lockIn" class="dobmask" maxlength="10" inputmode="numeric" dir="ltr" autocomplete="off" placeholder="dd-mm-yyyy" style="font-size:28px;text-align:center;width:100%;min-height:58px;border-radius:16px;border:3px solid var(--line)">'+
-    '<div class="lockpad" dir="ltr">'+[1,2,3,4,5,6,7,8,9,'',0,'⌫'].map(function(x){return x===''?'<span></span>':'<button data-lockkey="'+x+'">'+x+'</button>';}).join('')+'</div>'+
-    '<button class="pill" style="background:var(--sun);color:var(--ink);width:100%;justify-content:center" data-lockgo>🔓 ادخل</button>'+
-    '<p id="lockErr" style="color:#A3262A;min-height:22px;font-weight:700;margin:8px 0 0"></p><p class="note">نسيت؟ اطلب من والديك.</p></div>';
-  document.getElementById('lockOv').hidden=false;
+  var ov=document.getElementById('lockOv');
+  if(!needLock()){ov.hidden=true;return;}
+  var kid=SESS.pick&&D.kids.filter(function(k){return k.id===SESS.pick;})[0],h;
+  if(!kid){
+    h='<div class="cheer"><div class="em">🌳</div><h2>مين هيدخل الحديقة؟</h2><p style="font-size:17px;margin:0 0 12px">اختر اسمك</p>'+
+      '<div class="whogrid">'+loginKids().map(function(k){return '<button class="whokid" data-loginkid="'+esc(k.id)+'"><span class="av lg">'+avInner(k)+'</span><b>'+esc(k.name)+'</b><small>🎂</small></button>';}).join('')+'</div>'+
+      '<button class="btn alt" style="margin-top:14px;width:100%" data-loginparent>👨‍👩‍👧 الوالد / الوالدة 🔐</button></div>';
+  } else {
+    h='<div class="cheer"><div class="av lg" style="margin:0 auto;width:96px;height:96px;flex-basis:96px">'+avInner(kid)+'</div>'+
+      '<h2>أهلاً يا '+esc(kid.name)+' 👋</h2>'+(D.set.famWord?'<div style="display:inline-block;background:var(--line);border-radius:999px;padding:6px 16px;font-weight:800;margin:0 0 10px">👨‍👩‍👧 عائلة: '+esc(D.set.famWord)+' 🔒</div>':'')+
+      '<p style="font-size:18px;margin:0 0 10px">اكتب تاريخ ميلادك (اليوم-الشهر-السنة)</p>'+
+      '<input id="lockIn" class="dobmask" maxlength="10" inputmode="numeric" dir="ltr" autocomplete="off" placeholder="dd-mm-yyyy" style="font-size:28px;text-align:center;width:100%;min-height:58px;border-radius:16px;border:3px solid var(--line)">'+
+      '<div class="lockpad" dir="ltr">'+[1,2,3,4,5,6,7,8,9,'',0,'⌫'].map(function(x){return x===''?'<span></span>':'<button data-lockkey="'+x+'">'+x+'</button>';}).join('')+'</div>'+
+      '<button class="pill" style="background:var(--sun);color:var(--ink);width:100%;justify-content:center" data-lockgo>🔓 ادخل</button>'+
+      '<p id="lockErr" style="color:#A3262A;min-height:22px;font-weight:700;margin:8px 0 0"></p>'+
+      '<div class="row" style="justify-content:space-between"><button class="linkbtn" data-loginback>→ رجوع</button><span class="note">نسيت؟ اطلب من والديك.</span></div></div>';
+  }
+  document.getElementById('lockBox').innerHTML=h;ov.hidden=false;
 }
+function loginAs(who,kidId){
+  SESS.who=who;SESS.kidId=kidId||null;SESS.pick=null;document.getElementById('lockOv').hidden=true;
+  if(who==='kid'){for(var i=0;i<D.kids.length;i++)if(D.kids[i].id===kidId)D.kid=i;}
+  lastStationKid=null;render();
+  if(who==='kid'){chime([659,784]);sayName(K().name);}else toast('👨‍👩‍👧 أهلاً بالوالدين');
+}
+function pickLoginKid(id){
+  var k=D.kids.filter(function(x){return x.id===id;})[0];if(!k)return;
+  if(!k.pinHash){loginAs('kid',id);toast('💡 ضع تاريخ ميلاد '+k.name+' من لوحة الوالدين ← الأبناء');return;}
+  SESS.pick=id;showLock();setTimeout(function(){var i=document.getElementById('lockIn');i&&i.focus();},50);
+}
+function loginParent(){
+  document.getElementById('lockOv').hidden=true;
+  gate('دخول الوالدين',function(){loginAs('parent');});
+}
+function logout(){SESS.who=null;SESS.kidId=null;SESS.pick=null;['parentOv','gateOv'].forEach(function(id){document.getElementById(id).hidden=true;});try{closeSurah();}catch(e){}render();showLock();}
 function tryUnlock(){
+  var k=D.kids.filter(function(x){return x.id===SESS.pick;})[0];if(!k)return;
   var v=normDob(document.getElementById('lockIn').value);
-  if(v&&hashPw(v)===K().pinHash){UNLOCK.ok=true;document.getElementById('lockOv').hidden=true;chime([659,784]);sayName(K().name);}
+  if(v&&hashPw(v)===k.pinHash)loginAs('kid',k.id);
   else{document.getElementById('lockErr').textContent='التاريخ غير صحيح، حاول مرة أخرى';document.getElementById('lockIn').value='';}
 }
 document.addEventListener('visibilitychange',function(){
-  if(document.hidden){UNLOCK.hiddenAt=Date.now();}
-  else if(UNLOCK.hiddenAt&&Date.now()-UNLOCK.hiddenAt>5*60e3){UNLOCK.ok=false;showLock();}
+  if(document.hidden){SESS.hiddenAt=Date.now();}
+  else if(SESS.hiddenAt&&Date.now()-SESS.hiddenAt>5*60e3&&SESS.who!==null){logout();}
 });
 document.addEventListener('keydown',function(e){if(e.key==='Enter'&&e.target&&e.target.id==='lockIn'){e.preventDefault();tryUnlock();}});
 
@@ -1920,9 +1948,10 @@ function playQ(q){try{qAudio.src=QURAN_AUDIO+pad3(q.audio[0])+pad3(q.audio[1])+'
 /* ---------- device role: parent device = full app, child device = only that child ---------- */
 var ROLE=(function(){try{var r=JSON.parse(localStorage.getItem('qg-role')||'null');if(r&&(r.role==='kid'||r.role==='parent'))return r;}catch(e){}return {role:'parent'};})();
 function saveRole(){try{localStorage.setItem('qg-role',JSON.stringify(ROLE));}catch(e){}}
-function kidLocked(){return ROLE.role==='kid'&&D.kids.some(function(k){return k.id===ROLE.kidId;});}
-function applyRole(){if(ROLE.role==='kid'&&!kidLocked()&&D.kids.length&&document.getElementById('welcomeOv').hidden&&SYNC.on){setTimeout(function(){openWhoAmI(false);},300);return;}if(!kidLocked())return;for(var i=0;i<D.kids.length;i++)if(D.kids[i].id===ROLE.kidId){D.kid=i;break;}}
-function roleLabel(){if(!kidLocked())return '👨‍👩‍👧 جهاز الوالد/الوالدة — يرى كل الأبناء';var k=K();return '🧒 جهاز '+esc(k.name)+' — يرى تقدّمه فقط';}
+function lockKidId(){if(SESS.who==='kid')return SESS.kidId;if(SESS.who==='parent')return null;return ROLE.role==='kid'?ROLE.kidId:null;}
+function kidLocked(){var id=lockKidId();return !!id&&D.kids.some(function(k){return k.id===id;});}
+function applyRole(){if(ROLE.role==='kid'&&!kidLocked()&&D.kids.length&&document.getElementById('welcomeOv').hidden&&SYNC.on){setTimeout(function(){openWhoAmI(false);},300);return;}if(!kidLocked())return;var lk=lockKidId();for(var i=0;i<D.kids.length;i++)if(D.kids[i].id===lk){D.kid=i;break;}}
+function roleLabel(){var dk=ROLE.role==='kid'&&D.kids.filter(function(k){return k.id===ROLE.kidId;})[0];if(!dk)return '👨‍👩‍👧 جهاز الوالد/الوالدة — يرى كل الأبناء';return '🧒 جهاز '+esc(dk.name)+' — يرى تقدّمه فقط';}
 function openWhoAmI(afterJoin){
   document.getElementById('welcomeBox').innerHTML='<div class="cheer"><div class="em">📱</div><h2>لمن هذا الجهاز؟</h2>'+
     '<p style="font-size:17px;margin:0 0 14px">'+(afterJoin?'تم الانضمام للعائلة ✔ ':'')+'اختر الطفل الذي سيستخدم هذا الجهاز، فيظهر له تقدّمه هو فقط.</p>'+
@@ -1932,7 +1961,7 @@ function openWhoAmI(afterJoin){
 }
 function setRole(v){
   if(v==='parent')ROLE={role:'parent'};else ROLE={role:'kid',kidId:v};
-  saveRole();applyRole();lastStationKid=null;document.getElementById('welcomeOv').hidden=true;if(v!=='parent')UNLOCK.ok=true;render();
+  saveRole();applyRole();lastStationKid=null;document.getElementById('welcomeOv').hidden=true;if(v!=='parent'){SESS.who='kid';SESS.kidId=v;}else SESS.who='parent';SESS.pick=null;document.getElementById('lockOv').hidden=true;render();
   if(!document.getElementById('parentOv').hidden)renderParent();
   toast(kidLocked()?'📱 هذا الجهاز الآن جهاز '+K().name:'📱 هذا جهاز الوالد');if(kidLocked())sayName(K().name);
 }
@@ -1997,7 +2026,7 @@ function renderGarden(){
   document.getElementById('main').innerHTML=updBannerHtml()+planCardHtml()+raceHtml()+legend+zones+
     '<footer>التلاوة: الشيخ مشاري راشد العفاسي، آية بآية · يُحفظ كل شيء على هذا الجهاز</footer>';
 }
-function render(){applyRole();if(needLock()&&document.getElementById('lockOv').hidden)setTimeout(showLock,0);renderKids();renderStats();renderGarden();renderPlayer();
+function render(){applyRole();if(needLock()&&document.getElementById('lockOv').hidden&&document.getElementById('gateOv').hidden)setTimeout(function(){if(document.getElementById('gateOv').hidden)showLock();},0);renderKids();renderStats();renderGarden();renderPlayer();
   var pr=pendingRecs(),pb=document.getElementById('openParent');
   if(pb)pb.lastChild.textContent='لوحة الوالدين'+(pr?' · 🎙️ '+ar(pr):'');
   applyTheme();setTimeout(checkBadges,0);}
@@ -2213,7 +2242,7 @@ function renderParent(){
     '<div class="tabs" role="tablist">'+tabs.map(function(t){return '<button role="tab" aria-selected="'+(PT===t[0])+'" class="'+(PT===t[0]?'on':'')+'" data-ptab="'+t[0]+'">'+t[1]+'</button>';}).join('')+'</div>'+
     '<div class="pbody">'+body+'</div>';
 }
-function openParent(){gate('لوحة الوالدين',function(){PT='report';renderParent();document.getElementById('parentOv').hidden=false;});}
+function openParent(){if(SESS.who==='parent'){PT='report';renderParent();document.getElementById('parentOv').hidden=false;return;}gate('لوحة الوالدين',function(){PT='report';renderParent();document.getElementById('parentOv').hidden=false;});}
 document.getElementById('openParent').addEventListener('click',openParent);
 
 document.addEventListener('change',function(e){
@@ -2255,6 +2284,10 @@ document.addEventListener('click',function(e){
   if(ds.cleardob!=null){var ci=+ds.cleardob;D.kids[ci].dob='';D.kids[ci].pinHash='';save();publishLogins();renderParent();toast('تمت الإزالة');return;}
   if(ds.lockkey!=null){var li=document.getElementById('lockIn');var dg=li.value.replace(/[^0-9]/g,'');dg=ds.lockkey==='⌫'?dg.slice(0,-1):dg+ds.lockkey;li.value=maskDob(dg);if(li.value.length===10)tryUnlock();return;}
   if(ds.lockgo!=null){tryUnlock();return;}
+  if(ds.loginkid){pickLoginKid(ds.loginkid);return;}
+  if(ds.loginparent!=null){loginParent();return;}
+  if(ds.loginback!=null){SESS.pick=null;showLock();return;}
+  if(ds.logout!=null){logout();return;}
   if(ds.whoopen!=null){openWhoAmI(false);return;}
   if(ds.update!=null){updStart();return;}
   if(ds.meaning){openMeaning(+ds.meaning);return;}
@@ -2323,7 +2356,7 @@ document.addEventListener('click',function(e){
     if(!gm){toast('اكتب عدد الدقائق');return;}gk.gameMs=Math.max(0,(gk.gameMs||0)+gm*60000);save();render();renderParent();toast('🎮 وقت لعب '+gk.name+': '+fmtClock(gk.gameMs));return;}
   if(ds.gamezero!=null){var gz=D.kids[+ds.gamezero];gz.gameMs=0;save();render();renderParent();toast('تم تصفير وقت اللعب');return;}
   if(ds.planplus!=null){var pk3=D.kids[+ds.planplus];if(pk3.plan<ORDER.length){pk3.plan++;save();render();renderParent();toast('🔓 فُتحت سورة '+SURAHS[ORDER[pk3.plan-1]][0]+' لـ'+pk3.name);}return;}
-  if(ds.gate){if(ds.gate==='ok')gateOk();else if(ds.gate==='forgot'){gateMode='forgot';drawGate();}else{document.getElementById('gateOv').hidden=true;gateCb=null;}return;}
+  if(ds.gate){if(ds.gate==='ok')gateOk();else if(ds.gate==='forgot'){gateMode='forgot';drawGate();}else{document.getElementById('gateOv').hidden=true;gateCb=null;if(needLock())showLock();}return;}
   if(ds.confirm!=null){document.getElementById('cheerOv').hidden=true;var cc=confirmCb;confirmCb=null;cc&&cc();return;}
   if(ds.photo!=null){pickPhoto(+ds.photo);return;}
   if(ds.nophoto!=null){D.kids[+ds.nophoto].photo=null;save();renderParent();renderKids();renderStats();return;}
