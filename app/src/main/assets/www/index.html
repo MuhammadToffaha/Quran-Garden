@@ -152,6 +152,8 @@ footer{text-align:center;font-size:16px}
 .updnotes{margin-top:6px;font-size:15px;background:rgba(255,255,255,.6);border-radius:12px;padding:4px 10px}
 .updnotes summary{cursor:pointer;font-weight:800;min-height:32px;display:flex;align-items:center;gap:6px}
 .updnotes ul{margin:4px 0;padding-inline-start:20px}.updnotes p{margin:4px 0}.updnotes .nh{font-weight:800}
+.lockpad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}
+.lockpad button{min-height:56px;border-radius:16px;border:3px solid var(--line);background:#fff;font-size:26px;font-weight:800;color:var(--ink)}
 .whogrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
 .whokid{display:flex;flex-direction:column;align-items:center;gap:6px;min-height:130px;border-radius:20px;border:3px solid var(--line);background:#fff;color:var(--ink);font-size:18px;padding:10px}
 .whokid.on{border-color:var(--green);background:#EEF8E8}
@@ -514,6 +516,7 @@ body{transition:background .4s}
   <div class="gpad"><button data-g="left" aria-label="يسار">⬅</button><button data-g="up" aria-label="قفز">⬆</button><button data-g="down" aria-label="انزلاق">⬇</button><button data-g="right" aria-label="يمين">➡</button></div>
   <div id="gEnd" class="modal cheer" hidden></div>
 </section>
+<div class="overlay" id="lockOv" hidden style="z-index:65;background:var(--sand)"><div class="modal" role="dialog" aria-modal="true" aria-label="الدخول" id="lockBox" style="width:min(100%,420px)"></div></div>
 <div class="overlay" id="welcomeOv" hidden style="z-index:57"><div class="modal" role="dialog" aria-modal="true" aria-label="مرحباً" id="welcomeBox"></div></div>
 <div class="overlay" id="recOv" hidden style="z-index:54"><div class="modal" role="dialog" aria-modal="true" aria-label="تسجيل التسميع" id="recBox"></div></div>
 <div class="overlay" id="meanOv" hidden style="z-index:51"><div class="modal" role="dialog" aria-modal="true" aria-label="معنى السورة" id="meanBox" style="width:min(100%,760px)"></div></div>
@@ -1599,6 +1602,102 @@ function certsSectionHtml(k){
     '<p class="note">احفظ أول سورة لتحصل على أول شهادة! 🌱</p>');
 }
 
+/* ---------- 🎂 child login: family name + birthday to join, birthday as login PIN ---------- */
+function sha256hex(str){
+  function rr(v,n){return (v>>>n)|(v<<(32-n));}
+  var K=[],H=[],n=0,c=2,i,j;
+  function isP(x){for(var f=2;f*f<=x;f++)if(x%f===0)return false;return true;}
+  function frac(x){return ((x-Math.floor(x))*4294967296)|0;}
+  while(n<64){if(isP(c)){if(n<8)H[n]=frac(Math.pow(c,1/2));K[n]=frac(Math.pow(c,1/3));n++;}c++;}
+  var s=unescape(encodeURIComponent(str)),bl=s.length*8;
+  s+='\x80';while(s.length%64!==56)s+='\x00';
+  var w=[];for(i=0;i<s.length;i++)w[i>>2]|=s.charCodeAt(i)<<((3-i%4)*8);
+  w.push((bl/4294967296)|0);w.push(bl|0);
+  for(j=0;j<w.length;j+=16){
+    var W=w.slice(j,j+16),a=H[0],b=H[1],cc=H[2],d=H[3],e=H[4],f=H[5],g=H[6],hh=H[7];
+    for(i=0;i<64;i++){
+      if(i>=16){var x=W[i-15],y=W[i-2];W[i]=(W[i-16]+(rr(x,7)^rr(x,18)^(x>>>3))+W[i-7]+(rr(y,17)^rr(y,19)^(y>>>10)))|0;}
+      var t1=(hh+(rr(e,6)^rr(e,11)^rr(e,25))+((e&f)^(~e&g))+K[i]+W[i])|0,
+          t2=((rr(a,2)^rr(a,13)^rr(a,22))+((a&b)^(a&cc)^(b&cc)))|0;
+      hh=g;g=f;f=e;e=(d+t1)|0;d=cc;cc=b;b=a;a=(t1+t2)|0;
+    }
+    H[0]=(H[0]+a)|0;H[1]=(H[1]+b)|0;H[2]=(H[2]+cc)|0;H[3]=(H[3]+d)|0;H[4]=(H[4]+e)|0;H[5]=(H[5]+f)|0;H[6]=(H[6]+g)|0;H[7]=(H[7]+hh)|0;
+  }
+  return H.map(function(v){return ('00000000'+(v>>>0).toString(16)).slice(-8);}).join('');
+}
+function normDob(s){
+  var t=normDigits(String(s||'')).replace(/[^0-9]+/g,' ').trim(),g=t?t.split(' '):[];
+  if(g.length===1&&g[0].length===8)g=[g[0].slice(0,2),g[0].slice(2,4),g[0].slice(4)];
+  if(g.length!==3)return '';
+  if(g[0].length===4)g=[g[2],g[1],g[0]];
+  var d=+g[0],m=+g[1],y=+g[2];if(y<100)y+=2000;
+  if(!(d>=1&&d<=31&&m>=1&&m<=12&&y>=1990&&y<=2100))return '';
+  return ('0'+d).slice(-2)+('0'+m).slice(-2)+y;
+}
+function maskDob(v){var d=normDigits(String(v||'')).replace(/[^0-9]/g,'').slice(0,8);
+  return d.length>4?d.slice(0,2)+'-'+d.slice(2,4)+'-'+d.slice(4):d.length>2?d.slice(0,2)+'-'+d.slice(2):d;}
+document.addEventListener('input',function(e){var t=e.target;if(t&&t.classList&&t.classList.contains('dobmask')){var m=maskDob(t.value);if(t.value!==m)t.value=m;
+  if(t.id==='lockIn'&&m.length===10)tryUnlock();}});
+function fmtDob(n){return n?n.slice(0,2)+'-'+n.slice(2,4)+'-'+n.slice(4):'';}
+function normFam(s){return String(s||'').trim().toLowerCase().replace(/\s+/g,'');}
+function loginKey(fam,dob){return sha256hex('quran-garden|'+normFam(fam)+'|'+dob);}
+function loginUrl(key){return SYNC.url.replace(/\/+$/,'')+'/families/'+key+'/login.json';}
+function publishLogins(){
+  if(!SYNC.on||!SYNC.url)return;var fam=normFam(D.set.famWord);
+  D.kids.forEach(function(k){
+    var key=fam.length>=4&&k.dob?loginKey(fam,k.dob):'';
+    if(k.loginKey&&k.loginKey!==key){fetch(loginUrl(k.loginKey),{method:'DELETE'}).catch(function(){});}
+    if(key){fetch(loginUrl(key),{method:'PUT',body:JSON.stringify({c:SYNC.code,k:k.id})}).catch(function(){});}
+    if(k.loginKey!==key){k.loginKey=key;}
+  });
+  save();
+}
+function joinByBirthday(fam,dobRaw,btn){try{localStorage.setItem('qg-fam',fam.trim());}catch(e){}
+  var dob=normDob(dobRaw);
+  if(normFam(fam).length<4){toast('اكتب اسم العائلة كما وضعه والدك');return;}
+  if(!dob){toast('اكتب تاريخ الميلاد مثل 28-08-2017');return;}
+  if(!EMBED){toast('هذا الإصدار بدون قاعدة بيانات مدمجة');return;}
+  if(btn){btn.disabled=true;btn.textContent='جارٍ الدخول…';}
+  var reset=function(){if(btn){btn.disabled=false;btn.textContent='🎂 ادخل';}};
+  fetch(EMBED+'/families/'+loginKey(fam,dob)+'/login.json').then(function(r){if(!r.ok)throw 'net';return r.json();}).then(function(j){
+    if(!j||!j.c||!j.k)throw 'nofound';
+    return joinFamily(EMBED,j.c).then(function(){
+      document.getElementById('welcomeOv').hidden=true;
+      if(D.kids.some(function(k){return k.id===j.k;})){UNLOCK.ok=true;setRole(j.k);}else openWhoAmI(true);
+    });
+  }).catch(function(e){reset();toast(e==='nofound'?'لم نجد طفلاً بهذا الاسم والتاريخ — تأكد منهما':'تعذّر الاتصال، تأكد من الإنترنت');});
+}
+function birthdayJoinHtml(prefix){
+  return '<label class="field"><span>👨‍👩‍👧 اسم العائلة</span><input id="'+prefix+'Fam" value="'+esc((function(){try{return localStorage.getItem('qg-fam')||'';}catch(e){return '';}})())+'" autocomplete="off" autocapitalize="off" placeholder="مثال: toffaha-garden" style="font-size:20px"></label>'+
+    '<label class="field" style="margin-top:10px"><span>🎂 تاريخ ميلادك</span><input id="'+prefix+'Dob" class="dobmask" maxlength="10" inputmode="numeric" dir="ltr" autocomplete="off" placeholder="dd-mm-yyyy" style="font-size:22px"></label>'+
+    '<div class="row" style="margin-top:12px"><button class="btn" data-dobjoin="'+prefix+'">🎂 ادخل</button></div>';
+}
+/* lock screen on a child's device: birthday every time the app opens */
+var UNLOCK={ok:false,hiddenAt:0};
+function needLock(){return kidLocked()&&!!K().pinHash&&!UNLOCK.ok;}
+function showLock(){
+  if(!needLock()){document.getElementById('lockOv').hidden=true;return;}
+  var k=K();
+  document.getElementById('lockBox').innerHTML='<div class="cheer"><div class="av lg" style="margin:0 auto;width:96px;height:96px;flex-basis:96px">'+avInner(k)+'</div>'+
+    '<h2>أهلاً يا '+esc(k.name)+' 👋</h2>'+(D.set.famWord?'<div style="display:inline-block;background:var(--line);border-radius:999px;padding:6px 16px;font-weight:800;margin:0 0 10px">👨‍👩‍👧 عائلة: '+esc(D.set.famWord)+' 🔒</div>':'')+
+    '<p style="font-size:18px;margin:0 0 10px">اكتب تاريخ ميلادك فقط (اليوم-الشهر-السنة)</p>'+
+    '<input id="lockIn" class="dobmask" maxlength="10" inputmode="numeric" dir="ltr" autocomplete="off" placeholder="dd-mm-yyyy" style="font-size:28px;text-align:center;width:100%;min-height:58px;border-radius:16px;border:3px solid var(--line)">'+
+    '<div class="lockpad" dir="ltr">'+[1,2,3,4,5,6,7,8,9,'',0,'⌫'].map(function(x){return x===''?'<span></span>':'<button data-lockkey="'+x+'">'+x+'</button>';}).join('')+'</div>'+
+    '<button class="pill" style="background:var(--sun);color:var(--ink);width:100%;justify-content:center" data-lockgo>🔓 ادخل</button>'+
+    '<p id="lockErr" style="color:#A3262A;min-height:22px;font-weight:700;margin:8px 0 0"></p><p class="note">نسيت؟ اطلب من والديك.</p></div>';
+  document.getElementById('lockOv').hidden=false;
+}
+function tryUnlock(){
+  var v=normDob(document.getElementById('lockIn').value);
+  if(v&&hashPw(v)===K().pinHash){UNLOCK.ok=true;document.getElementById('lockOv').hidden=true;chime([659,784]);sayName(K().name);}
+  else{document.getElementById('lockErr').textContent='التاريخ غير صحيح، حاول مرة أخرى';document.getElementById('lockIn').value='';}
+}
+document.addEventListener('visibilitychange',function(){
+  if(document.hidden){UNLOCK.hiddenAt=Date.now();}
+  else if(UNLOCK.hiddenAt&&Date.now()-UNLOCK.hiddenAt>5*60e3){UNLOCK.ok=false;showLock();}
+});
+document.addEventListener('keydown',function(e){if(e.key==='Enter'&&e.target&&e.target.id==='lockIn'){e.preventDefault();tryUnlock();}});
+
 function raceHtml(){
   var k=K(),s=kidSummary(k),plan=k.plan,p=k.prog,curN=null,curIdx=plan;
   for(var i=0;i<plan;i++){if((p[ORDER[i]]||0)<3){curN=ORDER[i];curIdx=i;break;}}
@@ -1833,7 +1932,7 @@ function openWhoAmI(afterJoin){
 }
 function setRole(v){
   if(v==='parent')ROLE={role:'parent'};else ROLE={role:'kid',kidId:v};
-  saveRole();applyRole();lastStationKid=null;document.getElementById('welcomeOv').hidden=true;render();
+  saveRole();applyRole();lastStationKid=null;document.getElementById('welcomeOv').hidden=true;if(v!=='parent')UNLOCK.ok=true;render();
   if(!document.getElementById('parentOv').hidden)renderParent();
   toast(kidLocked()?'📱 هذا الجهاز الآن جهاز '+K().name:'📱 هذا جهاز الوالد');if(kidLocked())sayName(K().name);
 }
@@ -1898,7 +1997,7 @@ function renderGarden(){
   document.getElementById('main').innerHTML=updBannerHtml()+planCardHtml()+raceHtml()+legend+zones+
     '<footer>التلاوة: الشيخ مشاري راشد العفاسي، آية بآية · يُحفظ كل شيء على هذا الجهاز</footer>';
 }
-function render(){applyRole();renderKids();renderStats();renderGarden();renderPlayer();
+function render(){applyRole();if(needLock()&&document.getElementById('lockOv').hidden)setTimeout(showLock,0);renderKids();renderStats();renderGarden();renderPlayer();
   var pr=pendingRecs(),pb=document.getElementById('openParent');
   if(pb)pb.lastChild.textContent='لوحة الوالدين'+(pr?' · 🎙️ '+ar(pr):'');
   applyTheme();setTimeout(checkBadges,0);}
@@ -2004,13 +2103,22 @@ function renderParent(){
     }).join('')+'</div>';
   }
   if(PT==='kids'){
-    body=deviceRoleBoxHtml()+D.kids.map(function(k,i){
+    body=deviceRoleBoxHtml()+
+      '<div class="box"><h3>🎂 دخول الأبناء بتاريخ الميلاد</h3>'+
+      (SYNC.on?'<p class="note">اختر اسماً للعائلة، وضع تاريخ ميلاد كل طفل في بطاقته بالأسفل. على جهاز الطفل: «جهاز طفل» ← اسم العائلة + تاريخ ميلاده، فيدخل مباشرة لحديقته هو.</p>'+
+        '<div class="row" style="align-items:flex-end"><label class="field" style="flex:1 1 220px"><span>👨‍👩‍👧 اسم العائلة (٤ أحرف على الأقل)</span><input id="famWordIn" autocomplete="off" autocapitalize="off" placeholder="مثال: toffaha-garden" value="'+esc(D.set.famWord||'')+'"></label><button class="btn" data-savefam>💾 حفظ</button></div>'+
+        '<p class="note">⚠️ اختر اسماً غير متوقَّع (ليس اسم العائلة فقط)، فمن يعرف الاسم وتاريخ الميلاد يستطيع فتح حديقة الطفل.</p>':
+        '<p class="note">فعّل «☁️ المزامنة» أولاً (أنشئ عائلة)، ثم ارجع هنا.</p>')+'</div>'+
+      D.kids.map(function(k,i){
       return '<div class="box"><div class="row" style="align-items:flex-end">'+
         '<span class="av lg" aria-hidden="true">'+avInner(k)+'</span>'+
         '<label class="field" style="flex:1 1 200px"><span>الاسم</span><input data-name="'+i+'" value="'+esc(k.name)+'" maxlength="20"></label>'+
         '<button class="btn" data-savename="'+i+'">حفظ الاسم</button>'+
         '<label class="field" style="flex:0 0 120px"><span>للشهادة</span><select data-gender="'+i+'"><option value="m"'+(k.gender!=='f'?' selected':'')+'>ولد</option><option value="f"'+(k.gender==='f'?' selected':'')+'>بنت</option></select></label>'+
         (D.kids.length>1?'<button class="btn danger" data-delkid="'+i+'">حذف</button>':'')+'</div>'+
+        '<div class="row" style="margin-top:12px;align-items:flex-end"><label class="field" style="flex:1 1 200px"><span>🎂 تاريخ الميلاد = رمز دخول الطفل</span><input id="dob'+i+'" class="dobmask" maxlength="10" inputmode="numeric" dir="ltr" placeholder="dd-mm-yyyy" value="'+esc(fmtDob(k.dob))+'"></label>'+
+        '<button class="btn alt" data-savedob="'+i+'">💾 حفظ</button>'+(k.dob?'<button class="btn danger" data-cleardob="'+i+'">إزالة</button>':'')+'</div>'+
+        (k.dob?'<p class="note">✅ '+esc(k.name)+' يدخل بـ: اسم العائلة + '+esc(fmtDob(k.dob))+'، ويُسأل عن التاريخ كل مرة يفتح التطبيق على جهازه.</p>':'')+
         '<div class="field" style="margin-top:12px"><span>الصورة الشخصية</span><div class="row">'+
           '<button class="btn alt" data-photo="'+i+'">📷 '+(k.photo?'تغيير الصورة':'رفع صورة من الجهاز')+'</button>'+
           (k.photo?'<button class="btn danger" data-nophoto="'+i+'">إزالة الصورة</button>':'')+'</div></div>'+
@@ -2140,6 +2248,13 @@ document.addEventListener('click',function(e){
   var b=e.target.closest('button');if(!b)return;var ds=b.dataset;
   if(ds.close){document.getElementById(ds.close).hidden=true;if(ds.close==='parentOv')render();return;}
   if(ds.whoami){setRole(ds.whoami);return;}
+  if(ds.dobjoin){var pf=ds.dobjoin;joinByBirthday(document.getElementById(pf+'Fam').value,document.getElementById(pf+'Dob').value,b);return;}
+  if(ds.savefam!=null){var fw=document.getElementById('famWordIn').value.trim();if(normFam(fw).length<4){toast('اسم العائلة ٤ أحرف على الأقل');return;}D.set.famWord=fw;save();publishLogins();renderParent();toast('✅ تم حفظ اسم العائلة');return;}
+  if(ds.savedob!=null){var di=+ds.savedob,dv=normDob(document.getElementById('dob'+di).value);if(!dv){toast('اكتب التاريخ مثل 28-08-2017');return;}
+    D.kids[di].dob=dv;D.kids[di].pinHash=hashPw(dv);save();publishLogins();renderParent();toast('🎂 تم حفظ تاريخ ميلاد '+D.kids[di].name);return;}
+  if(ds.cleardob!=null){var ci=+ds.cleardob;D.kids[ci].dob='';D.kids[ci].pinHash='';save();publishLogins();renderParent();toast('تمت الإزالة');return;}
+  if(ds.lockkey!=null){var li=document.getElementById('lockIn');var dg=li.value.replace(/[^0-9]/g,'');dg=ds.lockkey==='⌫'?dg.slice(0,-1):dg+ds.lockkey;li.value=maskDob(dg);if(li.value.length===10)tryUnlock();return;}
+  if(ds.lockgo!=null){tryUnlock();return;}
   if(ds.whoopen!=null){openWhoAmI(false);return;}
   if(ds.update!=null){updStart();return;}
   if(ds.meaning){openMeaning(+ds.meaning);return;}
@@ -2172,10 +2287,12 @@ document.addEventListener('click',function(e){
     if(ds.wchoice==='parent'){try{localStorage.setItem('qg-welcomed','1');}catch(err){}createFamily(EMBED,b).then(function(ok){if(ok){document.getElementById('welcomeOv').hidden=true;
       cheer('🔑','تم إنشاء العائلة!','رمز عائلتك: <b dir="ltr">'+esc(fmtCode(SYNC.code))+'</b><br>اكتبه على تابلت كل طفل. تجده دائماً في لوحة الوالدين ← المزامنة.');}});return;}
     if(ds.wchoice==='kid'){try{localStorage.setItem('qg-welcomed','1');}catch(err){}
-      wb.innerHTML='<h2>🧒 انضم لعائلتك</h2><p style="font-size:17px">اطلب رمز العائلة من والدك (تجده في لوحة الوالدين ← المزامنة).</p>'+
+      wb.innerHTML='<h2>🧒 ادخل حديقتك</h2><p style="font-size:17px">اكتب اسم العائلة وتاريخ ميلادك.</p>'+birthdayJoinHtml('w')+
+        '<details style="margin-top:14px"><summary style="font-weight:800;cursor:pointer">أو ادخل برمز العائلة الطويل</summary>'+
         '<label class="field"><span>رمز العائلة</span><input id="wCode" dir="ltr" autocomplete="off" autocapitalize="off" placeholder="abcd-efgh-jkmn-pqrs-tu" style="font-size:22px"></label>'+
-        '<div class="row" style="margin-top:12px"><button class="btn" data-joincode="w">🔗 انضم</button><button class="btn alt" data-wchoice="later">لاحقاً</button></div>';
-      setTimeout(function(){var i=document.getElementById('wCode');i&&i.focus();},50);return;}
+        '<div class="row" style="margin-top:12px"><button class="btn" data-joincode="w">🔗 انضم</button></div></details>'+
+        '<div class="row" style="margin-top:12px"><button class="btn alt" data-wchoice="later">لاحقاً</button></div>';
+      setTimeout(function(){var i=document.getElementById('wFam');i&&i.focus();},50);return;}
   }
   if(ds.joinpaste!=null){var jv=(document.getElementById('joinPaste').value||'').trim(),jm=/#join=(.+)$/.exec(jv),jp=jm?decodeURIComponent(jm[1]).split('|'):[];
     if(jp.length!==2||!validDbUrl(jp[0])||jp[1].length<18){toast('الرابط غير صالح — انسخه كاملاً من جهاز الوالد');return;}
@@ -2349,7 +2466,7 @@ function joinFamily(url,code){
 function joinErr(e){toast(e==='nofamily'?'لا توجد عائلة بهذا الرمز — تأكد من كتابته':'تعذّر الاتصال، تأكد من الإنترنت');}
 function createFamily(url,btn){
   if(btn){btn.disabled=true;btn.textContent='جارٍ الإنشاء…';}
-  return syncConnect(url,syncCode()).then(function(){render();if(!document.getElementById('parentOv').hidden)renderParent();toast('☁️ تم إنشاء العائلة ✔');return true;},
+  return syncConnect(url,syncCode()).then(function(){publishLogins();render();if(!document.getElementById('parentOv').hidden)renderParent();toast('☁️ تم إنشاء العائلة ✔');return true;},
     function(e){SYNC.err='تعذّر الاتصال ('+e+')';toast('تعذّر الإنشاء، تأكد من الإنترنت');if(!document.getElementById('parentOv').hidden)renderParent();return false;});
 }
 function syncTabHtml(){
@@ -2370,7 +2487,7 @@ function syncTabHtml(){
       '<div class="box" style="border-color:var(--leaf2)"><h3>👨‍👩‍👧 أول جهاز في العائلة (جهاز الوالد)</h3><p class="note">يُنشئ عائلة جديدة برمز سري، ويرفع ما على هذا الجهاز من أبناء وتقدّم.</p>'+
       '<button class="btn" data-embedcreate>✨ إنشاء عائلة جديدة</button></div>'+
       '<div class="box" style="border-color:#8E6BD8;margin-top:12px"><h3>🧒 جهاز إضافي (تابلت الطفل / موبايل الوالد الآخر)</h3>'+
-      '<label class="field"><span>اكتب رمز العائلة</span><input id="famCodeIn" dir="ltr" autocomplete="off" autocapitalize="off" placeholder="abcd-efgh-jkmn-pqrs-tu"></label>'+
+      '<p style="font-weight:800;margin:0 0 6px">🎂 بتاريخ الميلاد:</p>'+birthdayJoinHtml('s')+'<p style="font-weight:800;margin:14px 0 6px">🔑 أو برمز العائلة:</p>'+'<label class="field"><span>اكتب رمز العائلة</span><input id="famCodeIn" dir="ltr" autocomplete="off" autocapitalize="off" placeholder="abcd-efgh-jkmn-pqrs-tu"></label>'+
       '<div class="row" style="margin-top:8px"><button class="btn alt" data-joincode>🔗 انضم للعائلة</button></div>'+
       '<p class="note">سيُستبدل ما على هذا الجهاز ببيانات العائلة.</p></div>'+
       (SYNC.err?'<p style="color:#A3262A">⚠️ '+esc(SYNC.err)+'</p>':'');
