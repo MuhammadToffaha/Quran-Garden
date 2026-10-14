@@ -248,6 +248,25 @@ class MainActivity : ComponentActivity() {
             0
         }
 
+        /** Opens Android's share sheet (WhatsApp etc.) with a PNG made by the page, e.g. a certificate. */
+        @JavascriptInterface
+        fun shareImage(name: String, base64: String) {
+            try {
+                val bytes = Base64.decode(base64, Base64.DEFAULT)
+                val dir = File(cacheDir, "share").apply { mkdirs() }
+                val file = File(dir, name.replace(Regex("[^A-Za-z0-9._-]"), "_"))
+                file.writeBytes(bytes)
+                val uri = FileProvider.getUriForFile(this@MainActivity, "$packageName.files", file)
+                val send = Intent(Intent.ACTION_SEND)
+                    .setType("image/png")
+                    .putExtra(Intent.EXTRA_STREAM, uri)
+                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                runOnUiThread { startActivity(Intent.createChooser(send, "مشاركة الشهادة")) }
+            } catch (e: Exception) {
+                runOnUiThread { notifyPage("shareerror") }
+            }
+        }
+
         /** Reads the daily nature picture list (Bing image of the day). Only bing.com is allowed. */
         @JavascriptInterface
         fun fetchText(url: String): String? {

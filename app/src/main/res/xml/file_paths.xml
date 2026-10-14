@@ -2,4 +2,6 @@
 <paths>
     <!-- Downloaded update APKs live in the app's own external files folder -->
     <external-files-path name="updates" path="updates/" />
+    <!-- Certificates shared to WhatsApp etc. -->
+    <cache-path name="share" path="share/" />
 </paths>

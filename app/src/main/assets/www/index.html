@@ -309,6 +309,16 @@ header,main,.overlay>.modal,#gEnd,#toast,#shead,#pctrl{zoom:var(--ui)}
 .tjlegend{display:flex;flex-wrap:wrap;gap:6px;max-width:1000px;margin:0 auto 8px;justify-content:center}
 .tjchip{display:flex;align-items:center;gap:6px;min-height:36px;border-radius:999px;border:2px solid var(--line);background:#fff;color:var(--ink);font-size:14px;font-weight:800;padding:2px 12px}
 .tjchip i{width:14px;height:14px;border-radius:50%;display:inline-block}
+/* ---------- plan + certificates ---------- */
+.plancard{background:#fff;border-radius:22px;padding:14px 16px;border:4px solid var(--sun);box-shadow:0 5px 0 #E8C766}
+.plancard.done{text-align:center;font-size:20px}
+.ptag{display:inline-block;background:var(--soft);border-radius:999px;padding:1px 12px;font-weight:800;font-size:15px}
+.pmain{font-size:24px;font-weight:800;margin-top:4px}.pmain span{font-size:18px;color:var(--green)}
+.psub{font-size:15px;margin-top:2px}
+.certimg{display:block;width:100%;height:auto;border-radius:12px;margin-top:10px;box-shadow:0 4px 14px rgba(0,0,0,.15)}
+.certgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.certitem{display:flex;flex-direction:column;align-items:center;gap:2px;min-height:64px;border-radius:16px;border:3px solid var(--line);background:#FFFDF6;color:var(--ink);font-size:15px;padding:8px}
+.certitem small{color:#7A4B00}
 /* ---------- meaning ---------- */
 .mbox{background:var(--soft);border-radius:18px;padding:12px 14px;margin-top:12px;font-size:17px;line-height:1.8}
 .mbox p{margin:6px 0 0}
@@ -501,6 +511,7 @@ body{transition:background .4s}
 <div class="overlay" id="recOv" hidden style="z-index:54"><div class="modal" role="dialog" aria-modal="true" aria-label="تسجيل التسميع" id="recBox"></div></div>
 <div class="overlay" id="meanOv" hidden style="z-index:51"><div class="modal" role="dialog" aria-modal="true" aria-label="معنى السورة" id="meanBox" style="width:min(100%,760px)"></div></div>
 <div class="overlay" id="badgeOv" hidden style="z-index:51"><div class="modal" role="dialog" aria-modal="true" aria-label="الأوسمة" id="badgeBox" style="width:min(100%,860px)"></div></div>
+<div class="overlay" id="certOv" hidden style="z-index:52"><div class="modal" role="dialog" aria-modal="true" aria-label="الشهادة" id="certBox" style="width:min(100%,900px)"></div></div>
 <div class="overlay" id="cheerOv" hidden style="z-index:56"><div class="modal cheer" role="dialog" aria-modal="true" id="cheerBox"></div></div>
 <canvas id="confetti" aria-hidden="true"></canvas>
 <input type="file" id="importFile" accept="application/json" hidden>
@@ -903,6 +914,7 @@ function doGrow(n,target){
   }
   save();S.justGrew=n;render();S.justGrew=null;
   var ptsTxt=((gained+bonus)?' <b>+'+ar(gained+bonus)+' نقطة ⭐</b>':'')+(gameWon?'<br><b>🎮 وربحت '+ar(D.set.gameMin)+' دقائق لعب!</b>':'');
+  if(nx===3)setTimeout(function(){var cb=document.getElementById('cheerBox');if(cb&&!document.getElementById('cheerOv').hidden)cb.insertAdjacentHTML('beforeend','<div style="margin-top:10px"><button class="pill" style="background:#fff;color:var(--green);border:3px solid var(--green)" data-cert="'+(zoneDone&&ZONES[zi].nums.length>1?'z'+zi:'s'+n)+'">📜 شهادتي</button></div>');},0);
   if(gameWon)setTimeout(function(){var cb=document.getElementById('cheerBox');if(cb&&!document.getElementById('cheerOv').hidden)cb.insertAdjacentHTML('beforeend','<div style="margin-top:10px"><button class="playbtn" data-game>🎮 العب شوية</button></div>');},0);
   if(nx===3){
     if(n===36&&zoneDone)cheer('🏆','وصلت إلى سورة يس!','أزهرت حديقتك كلها يا '+esc(k.name)+'. فخورون بك جداً!'+ptsTxt);
@@ -917,6 +929,7 @@ function autoStage(k,s){var m=passes(k,s),T=D.set;return m>=T.t3?3:m>=T.t2?2:m>=
 function recordListen(s,a){
   if(!s||!a)return;var k=K(),arr=k.al[s]||(k.al[s]=[]);arr[a]=(arr[a]||0)+1;
   if(S.heardFor!==s){S.heard={};S.heardFor=s;}S.heard[a]=1;
+  try{planCheckDone(k);}catch(e){}
   if((k.prog[s]||0)===3&&Object.keys(S.heard).length>=SURAHS[s][1]&&k.rev[s]!==dkey()){
     k.rev[s]=dkey();S.heard={};k.revCount=(k.revCount||0)+1;addPts(k,10,'مراجعة سورة '+SURAHS[s][0]);
     if(D.set.gameRevMin>0)k.gameMs=(k.gameMs||0)+D.set.gameRevMin*60000;
@@ -1307,6 +1320,7 @@ var BADGES=[
  ['story10','📜','حكواتي','قرأت معنى ١٥ سورة',function(k,s){return [Object.keys(k.meant).length,15];}],
  ['tajweed','🎨','عالم التجويد','تعرّفت على حكم تجويد',function(k,s){return [k.flags&&k.flags.tj?1:0,1];}],
  ['recorder','🎙️','قارئ صغير','أرسلت أول تسميع',function(k,s){return [Object.keys(k.recs).length,1];}],
+ ['plan7','📅','ملتزم بالخطة','أنهيت ٧ حصص يومية',function(k,s){return [k.planDone||0,7];}],
  ['game','🎮','بطل الجري','قطعت مسافة ١٠٠٠ في اللعبة',function(k,s){return [k.gameBest||0,1000];}]
 ];
 function zoneDoneCount(k,zi){return ZONES[zi].nums.filter(function(n){return k.prog[n]===3;}).length;}
@@ -1330,8 +1344,176 @@ function openBadges(){
   document.getElementById('badgeBox').innerHTML='<div class="row" style="justify-content:space-between"><h2 style="margin:0">🏅 أوسمة '+esc(k.name)+'</h2><button class="btn alt" data-close="badgeOv">✕</button></div>'+
     '<p style="font-size:18px;margin:6px 0 12px">جمعت <b>'+ar(got)+'</b> من '+ar(st.length)+' وسام</p>'+
     '<div class="badgegrid">'+st.map(function(b){return '<div class="badge2'+(b.got?' got':'')+'"><div class="bic">'+(b.got?b.ic:'🔒')+'</div><b>'+b.t+'</b><small>'+b.d+'</small>'+
-      (b.got?'<span class="bdate">'+(b.at||'')+'</span>':'<span class="bprog"><i style="width:'+Math.round(b.cur*100/b.need)+'%"></i></span><small>'+ar(b.cur)+' / '+ar(b.need)+'</small>')+'</div>';}).join('')+'</div>';
+      (b.got?'<span class="bdate">'+(b.at||'')+'</span>':'<span class="bprog"><i style="width:'+Math.round(b.cur*100/b.need)+'%"></i></span><small>'+ar(b.cur)+' / '+ar(b.need)+'</small>')+'</div>';}).join('')+'</div>'+certsSectionHtml(k);
   document.getElementById('badgeOv').hidden=false;
+}
+
+/* ---------- 📅 smart plan: target surah + deadline → today's portion ---------- */
+function dateFromKey(s){var p=String(s||'').split('-');return p.length===3?new Date(+p[0],+p[1]-1,+p[2]):null;}
+function daysBetween(a,b){return Math.round((dateFromKey(b)-dateFromKey(a))/864e5);}
+function planActive(k){return !!(k.planCfg&&k.planCfg.deadline&&k.planCfg.to!=null);}
+function planTargets(k){var to=Math.min(k.planCfg.to,ORDER.length-1);return ORDER.slice(0,to+1);}
+function planFixPos(k){
+  var T=planTargets(k),pos=k.planPos;
+  if(!pos||T.indexOf(pos.s)<0||k.prog[pos.s]===3||pos.a>SURAHS[pos.s][1]){
+    var start=pos&&T.indexOf(pos.s)>=0?T.indexOf(pos.s)+(pos.a>SURAHS[pos.s][1]||k.prog[pos.s]===3?1:0):0;
+    pos=null;for(var i=start;i<T.length;i++){if(k.prog[T[i]]!==3){pos={s:T[i],a:1};break;}}
+    if(!pos)for(var j=0;j<T.length;j++){if(k.prog[T[j]]!==3){pos={s:T[j],a:1};break;}}
+    k.planPos=pos;
+  }
+  return k.planPos;
+}
+function planRemaining(k){
+  var pos=planFixPos(k);if(!pos)return 0;var T=planTargets(k),r=0,seen=false;
+  T.forEach(function(n){if(k.prog[n]===3)return;if(n===pos.s){seen=true;r+=SURAHS[n][1]-pos.a+1;}else if(seen||T.indexOf(n)>T.indexOf(pos.s))r+=SURAHS[n][1];});
+  return r;
+}
+function planInfo(k){
+  if(!planActive(k))return null;
+  var today=dkey(),left=Math.max(1,daysBetween(today,k.planCfg.deadline)+1),rem=planRemaining(k),
+      daily=Math.max(1,Math.ceil(rem/left)),total=Math.max(1,daysBetween(k.planCfg.start,k.planCfg.deadline)+1),
+      gone=Math.max(0,daysBetween(k.planCfg.start,today)),expected=Math.max(0,(k.planCfg.startRem||rem)*(1-gone/total)),status='on';
+  if(rem===0)status='done';else if(daysBetween(today,k.planCfg.deadline)<0)status='late';
+  else if(rem>expected*1.1+2)status='behind';else if(rem<expected*0.9-2)status='ahead';
+  return {left:left,rem:rem,daily:daily,status:status,hard:daily>20};
+}
+function planToday(k){
+  var info=planInfo(k);if(!info||info.status==='done')return null;
+  var today=dkey(),pd=k.planDay;
+  if(pd&&pd.date===today)return pd;
+  var pos=planFixPos(k);if(!pos)return null;
+  var n=pos.s,f=pos.a,t=Math.min(SURAHS[n][1],f+info.daily-1),arr=k.al[n]||[],base={};
+  for(var a=f;a<=t;a++)base[a]=arr[a]||0;
+  k.planDay={date:today,s:n,from:f,to:t,base:base,done:false};save();return k.planDay;
+}
+function planPortionProgress(k,pd){
+  var arr=k.al[pd.s]||[],need=D.set.t3,got=0,tot=pd.to-pd.from+1;
+  for(var a=pd.from;a<=pd.to;a++)got+=Math.min(need,(arr[a]||0)-(pd.base[a]||0));
+  return Math.max(0,Math.min(1,got/(need*tot)));
+}
+function planCheckDone(k){
+  var pd=k.planDay;if(!pd||pd.done||pd.date!==dkey())return;
+  if(planPortionProgress(k,pd)<1)return;
+  pd.done=true;k.planDone=(k.planDone||0)+1;k.planPos={s:pd.s,a:pd.to+1};planFixPos(k);
+  addPts(k,10,'حصة اليوم: '+SURAHS[pd.s][0]+' '+pd.from+'–'+pd.to);save();
+  setTimeout(function(){cheer('📅','أنهيت حصة اليوم!','حفظت سورة '+SURAHS[pd.s][0]+' من الآية '+ar(pd.from)+' إلى '+ar(pd.to)+'. +١٠ نقاط ⭐');},600);
+}
+function planExtra(){var k=K();if(!k.planDay||!k.planDay.done)return;k.planDay=null;var pd=planToday(k);if(pd){pd.extra=true;save();}render();}
+function openPortion(){
+  var k=K(),pd=planToday(k);if(!pd)return;
+  listen(pd.s,'memo');stop();S.from=pd.from;S.to=pd.to;startFrom(pd.s,pd.from);renderReader(true);
+}
+var PLAN_MSG={on:'👍 أنت على الخطة',ahead:'🚀 أنت متقدّم على الخطة!',behind:'⏰ متأخر قليلاً — زادت حصة اليوم لتلحق',late:'⌛ انتهى موعد الخطة — اطلب من والديك موعداً جديداً',done:'🏆 أكملت الخطة كلها!'};
+function planCardHtml(){
+  var k=K(),info=planInfo(k);if(!info)return '';
+  var tgt=ORDER[Math.min(k.planCfg.to,ORDER.length-1)];
+  if(info.status==='done')return '<section class="plancard done"><b>🏆 أكملت خطتك حتى سورة '+SURAHS[tgt][0]+'!</b></section>';
+  var pd=planToday(k),pct=pd?Math.round(planPortionProgress(k,pd)*100):0;
+  return '<section class="plancard" aria-label="خطة اليوم"><div class="row" style="justify-content:space-between;align-items:flex-start">'+
+    '<div><div class="ptag">📅 خطة اليوم</div>'+
+    (pd?'<div class="pmain">سورة '+SURAHS[pd.s][0]+' <span>الآيات '+ar(pd.from)+(pd.to>pd.from?' – '+ar(pd.to):'')+'</span></div>':'')+
+    '<div class="psub">الهدف: حتى سورة '+SURAHS[tgt][0]+' · باقي '+ar(info.left)+' يوم · '+ar(info.rem)+' آية</div>'+
+    '<div class="psub">'+PLAN_MSG[info.status]+'</div></div>'+
+    (pd&&!pd.done?'<button class="pill" style="background:var(--sun);color:var(--ink)" data-portion>▶️ ابدأ الحصة</button>':
+      pd&&pd.done?'<div style="text-align:center"><div style="font-size:22px;font-weight:800">✅ تمت</div><button class="btn alt" data-planextra style="margin-top:6px">➕ حصة إضافية</button></div>':'')+
+    '</div>'+(pd?'<div class="bar" style="margin-top:8px"><div style="width:'+pct+'%"></div></div><div class="psub">كرّر كل آية '+ar(D.set.t3)+' مرات · '+ar(pct)+'٪</div>':'')+'</section>';
+}
+function planTabHtml(){
+  var opts=function(sel){return ORDER.map(function(n,j){return '<option value="'+j+'"'+(j===sel?' selected':'')+'>'+ar(j+1)+' — حتى '+SURAHS[n][0]+'</option>';}).join('');};
+  return '<div class="box"><h3>📅 الخطة الذكية</h3><p class="note">اختر السورة التي يصل إليها الطفل والموعد، فيقسّم التطبيق الآيات الباقية على الأيام، ويعدّل الحصة تلقائياً إن تأخر أو تقدّم. تُحسب الحصة عندما يسمع كل آية فيها '+ar(D.set.t3)+' مرات.</p></div>'+
+    D.kids.map(function(k,i){
+      var c=k.planCfg||{},info=planInfo(k),pd=info?planToday(k):null;
+      return '<div class="box"><h3><span class="av sm">'+avInner(k)+'</span> '+esc(k.name)+'</h3><div class="kgrid">'+
+        '<label class="field"><span>الهدف</span><select id="pto'+i+'">'+opts(c.to!=null?c.to:Math.min(k.plan,ORDER.length)-1)+'</select></label>'+
+        '<label class="field"><span>الموعد</span><input type="date" id="pdl'+i+'" value="'+esc(c.deadline||'')+'" min="'+dkey()+'"></label></div>'+
+        '<div class="row" style="margin-top:10px"><button class="btn" data-plansave="'+i+'">💾 حفظ الخطة</button>'+(info?'<button class="btn danger" data-planstop="'+i+'">إيقاف الخطة</button>':'')+'</div>'+
+        (info?'<p style="margin:10px 0 0">'+PLAN_MSG[info.status]+' · باقي <b>'+ar(info.rem)+'</b> آية في <b>'+ar(info.left)+'</b> يوم = <b>'+ar(info.daily)+'</b> آية يومياً'+(info.hard?' ⚠️ هدف صعب، فكّر في تأجيل الموعد':'')+'</p>'+
+          (pd?'<p class="note">حصة اليوم: سورة '+SURAHS[pd.s][0]+' '+ar(pd.from)+'–'+ar(pd.to)+(pd.done?' ✅':'')+' · حصص مكتملة: '+ar(k.planDone||0)+'</p>':''):'')+'</div>';
+    }).join('');
+}
+
+/* ---------- 📜 printable certificate ---------- */
+function hijri(d){try{return new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura',{day:'numeric',month:'long',year:'numeric'}).format(d);}catch(e){return '';}}
+function certList(k){
+  var out=[];ZONES.forEach(function(z,zi){if(z.nums.length>1&&z.nums.every(function(n){return k.prog[n]===3;}))out.push({type:'zone',zi:zi,date:k.zd[zi]||''});});
+  ORDER.forEach(function(n){if(k.prog[n]===3)out.push({type:'surah',n:n,date:k.memAt[n]||''});});
+  return out;
+}
+var CERT=null;
+function loadImg(src){return new Promise(function(res){if(!src)return res(null);var im=new Image();im.onload=function(){res(im);};im.onerror=function(){res(null);};im.src=src;});}
+function drawCert(c){
+  var k=K(),W=1600,H=1131,cv=document.createElement('canvas');cv.width=W;cv.height=H;var x=cv.getContext('2d');
+  var green=getComputedStyle(document.body).getPropertyValue('--green').trim()||'#1E7A45',sun='#C9A227';
+  var title=c.type==='zone'?ZONES[c.zi].title.split(' —')[0]:'سورة '+SURAHS[c.n][0];
+  var girl=k.gender==='f',d=c.date?dateFromKey(c.date):new Date();
+  return Promise.all([document.fonts&&document.fonts.load?Promise.all([document.fonts.load('64px "Amiri Quran"'),document.fonts.load('800 40px "Baloo Bhaijaan 2"')]).catch(function(){}):0,
+      loadImg(k.photo&&/^data:image\//.test(k.photo)?k.photo:null)]).then(function(r){
+    var photo=r[1];
+    x.fillStyle='#FFFDF6';x.fillRect(0,0,W,H);
+    // borders + corner stars
+    x.strokeStyle=green;x.lineWidth=18;x.strokeRect(30,30,W-60,H-60);
+    x.strokeStyle=sun;x.lineWidth=5;x.strokeRect(62,62,W-124,H-124);
+    x.setLineDash([2,14]);x.lineCap='round';x.lineWidth=6;x.strokeRect(84,84,W-168,H-168);x.setLineDash([]);
+    function star(cx,cy,r,col){x.save();x.translate(cx,cy);x.fillStyle=col;x.beginPath();for(var i=0;i<16;i++){var a=i*Math.PI/8,rr=i%2?r*.45:r;x.lineTo(Math.cos(a)*rr,Math.sin(a)*rr);}x.closePath();x.fill();x.restore();}
+    [[120,120],[W-120,120],[120,H-120],[W-120,H-120]].forEach(function(p){star(p[0],p[1],38,sun);star(p[0],p[1],16,green);});
+    x.direction='rtl';x.textAlign='center';x.textBaseline='middle';
+    x.fillStyle=green;x.font='64px "Amiri Quran", "Amiri", serif';x.fillText('بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ',W/2,170);
+    x.fillStyle='#1F3A2E';x.font='800 92px "Baloo Bhaijaan 2", sans-serif';x.fillText('شهادة إتمام حفظ',W/2,290);
+    // photo / avatar circle
+    var cx=W/2,cy=455,R=95;x.save();x.beginPath();x.arc(cx,cy,R,0,7);x.closePath();x.fillStyle='#FFF1C9';x.fill();x.clip();
+    if(photo)x.drawImage(photo,cx-R,cy-R,R*2,R*2);else{x.font='120px serif';x.fillText(k.avatar||'🌸',cx,cy+8);}
+    x.restore();x.lineWidth=10;x.strokeStyle=sun;x.beginPath();x.arc(cx,cy,R+4,0,7);x.stroke();
+    x.fillStyle='#3A4A40';x.font='600 42px "Baloo Bhaijaan 2", sans-serif';
+    x.fillText('نشهد بكل فخر بأنّ '+(girl?'البطلة':'البطل'),W/2,605);
+    x.fillStyle=green;x.font='800 86px "Baloo Bhaijaan 2", sans-serif';x.fillText(k.name,W/2,695);
+    x.fillStyle='#3A4A40';x.font='600 42px "Baloo Bhaijaan 2", sans-serif';x.fillText((girl?'قد أتمّت':'قد أتمّ')+' حفظ',W/2,782);
+    x.fillStyle='#B5367A';x.font='800 74px "Baloo Bhaijaan 2", sans-serif';x.fillText(title,W/2,862);
+    x.fillStyle='#5B4A33';x.font='500 32px "Baloo Bhaijaan 2", sans-serif';
+    var dl=d.toLocaleDateString('ar-EG',{day:'numeric',month:'long',year:'numeric'}),hj=hijri(d);
+    x.fillText(dl+(hj?'  ·  '+hj:''),W/2,935);
+    x.font='600 34px "Baloo Bhaijaan 2", sans-serif';x.fillStyle='#1F3A2E';
+    x.textAlign='right';x.fillText('التوقيع: '+(D.set.certSigner||'والداك المحبّان'),W-180,1015);
+    x.textAlign='left';x.fillText('🌸 حديقة القرآن',180,1015);
+    x.textAlign='center';x.font='500 30px "Baloo Bhaijaan 2", sans-serif';x.fillStyle=green;x.fillText('«خيركم من تعلّم القرآن وعلّمه»',W/2,1015);
+    return cv.toDataURL('image/png');
+  });
+}
+function openCert(c){
+  CERT={c:c,url:''};
+  document.getElementById('certBox').innerHTML='<div class="row" style="justify-content:space-between"><h2 style="margin:0">📜 الشهادة</h2><button class="btn alt" data-close="certOv">✕</button></div><p>⏳ جارٍ تجهيز الشهادة…</p>';
+  document.getElementById('certOv').hidden=false;
+  drawCert(c).then(function(url){CERT.url=url;
+    document.getElementById('certBox').innerHTML='<div class="row" style="justify-content:space-between"><h2 style="margin:0">📜 الشهادة</h2><button class="btn alt" data-close="certOv">✕</button></div>'+
+      '<img src="'+url+'" alt="شهادة" class="certimg">'+
+      '<div class="row" style="justify-content:center;margin-top:12px"><button class="btn" data-certshare>📲 مشاركة (واتساب)</button><button class="btn alt" data-certsave>💾 حفظ الصورة</button>'+
+      (window.AndroidBridge?'':'<button class="btn alt" data-certprint>🖨️ طباعة</button>')+'</div>';
+  });
+}
+function certFile(){var c=CERT.c;return 'quran-garden-'+(c.type==='zone'?'juz-'+c.zi:'surah-'+c.n)+'.png';}
+function certShare(){
+  if(!CERT||!CERT.url)return;var b64=CERT.url.split(',')[1];
+  if(window.AndroidBridge&&AndroidBridge.shareImage){try{AndroidBridge.shareImage(certFile(),b64);}catch(e){toast('تعذّرت المشاركة');}return;}
+  fetch(CERT.url).then(function(r){return r.blob();}).then(function(bl){
+    var f=new File([bl],certFile(),{type:'image/png'});
+    if(navigator.canShare&&navigator.canShare({files:[f]}))return navigator.share({files:[f],title:'شهادة حديقة القرآن'});
+    certSave();
+  }).catch(function(){});
+}
+function certSave(){
+  if(!CERT||!CERT.url)return;
+  if(window.AndroidBridge&&AndroidBridge.saveFile){var ok=false;try{ok=AndroidBridge.saveFile(certFile(),'image/png',CERT.url.split(',')[1]);}catch(e){}toast(ok?'💾 حُفظت في التنزيلات':'تعذّر الحفظ');return;}
+  var a=document.createElement('a');a.href=CERT.url;a.download=certFile();document.body.appendChild(a);a.click();a.remove();
+}
+function certPrint(){
+  if(!CERT||!CERT.url)return;var w=window.open('');if(!w){toast('اسمح بالنوافذ المنبثقة للطباعة');return;}
+  w.document.write('<html><head><title>شهادة</title><style>@page{size:landscape;margin:0}body{margin:0}img{width:100%}</style></head><body><img src="'+CERT.url+'" onload="setTimeout(function(){print()},300)"></body></html>');w.document.close();
+}
+function certsSectionHtml(k){
+  var L=certList(k);
+  return '<h3 style="margin:18px 0 8px">📜 شهاداتي</h3>'+(L.length?'<div class="certgrid">'+L.map(function(c){
+    var t=c.type==='zone'?'🏆 '+ZONES[c.zi].title.split(' —')[0]:'🌸 سورة '+SURAHS[c.n][0];
+    return '<button class="certitem" data-cert="'+(c.type==='zone'?'z'+c.zi:'s'+c.n)+'"><b>'+t+'</b><small>'+(c.date||'')+'</small></button>';}).join('')+'</div>':
+    '<p class="note">احفظ أول سورة لتحصل على أول شهادة! 🌱</p>');
 }
 
 function raceHtml(){
@@ -1601,7 +1783,7 @@ function renderGarden(){
       '<div class="bed"><div class="grid">'+tiles+'</div></div></section>';
   }).join('');
   setTimeout(scrollStations,0);
-  document.getElementById('main').innerHTML=updBannerHtml()+raceHtml()+legend+zones+
+  document.getElementById('main').innerHTML=updBannerHtml()+planCardHtml()+raceHtml()+legend+zones+
     '<footer>التلاوة: الشيخ مشاري راشد العفاسي، آية بآية · يُحفظ كل شيء على هذا الجهاز</footer>';
 }
 function render(){renderKids();renderStats();renderGarden();renderPlayer();
@@ -1691,7 +1873,7 @@ function fmtTime(sec){var m=Math.round(sec/60);return m<60?ar(m)+' دقيقة':a
 function last7(k){var out=[],d=new Date();for(var i=6;i>=0;i--){var x=new Date(d);x.setDate(d.getDate()-i);out.push(k.days[dkey(x)]||0);}return out;}
 function renderParent(){
   var pr=pendingRecs();
-  var tabs=[['report','التقارير'],['recs','🎙️ التسميع'+(pr?' ('+ar(pr)+')':'')],['money','💰 المكافآت'],['kids','الأبناء'],['learn','إعدادات الحفظ'],['progress','إدارة التقدّم'],['sync','☁️ المزامنة'+(SYNC.on?' ✅':'')],['backup','نسخ احتياطي']];
+  var tabs=[['report','التقارير'],['recs','🎙️ التسميع'+(pr?' ('+ar(pr)+')':'')],['money','💰 المكافآت'],['kids','الأبناء'],['learn','إعدادات الحفظ'],['plan','📅 الخطة'],['progress','إدارة التقدّم'],['sync','☁️ المزامنة'+(SYNC.on?' ✅':'')],['backup','نسخ احتياطي']];
   var body='';
   if(PT==='report'){
     body='<div class="kgrid">'+D.kids.map(function(k){
@@ -1715,12 +1897,14 @@ function renderParent(){
         '<span class="av lg" aria-hidden="true">'+avInner(k)+'</span>'+
         '<label class="field" style="flex:1 1 200px"><span>الاسم</span><input data-name="'+i+'" value="'+esc(k.name)+'" maxlength="20"></label>'+
         '<button class="btn" data-savename="'+i+'">حفظ الاسم</button>'+
+        '<label class="field" style="flex:0 0 120px"><span>للشهادة</span><select data-gender="'+i+'"><option value="m"'+(k.gender!=='f'?' selected':'')+'>ولد</option><option value="f"'+(k.gender==='f'?' selected':'')+'>بنت</option></select></label>'+
         (D.kids.length>1?'<button class="btn danger" data-delkid="'+i+'">حذف</button>':'')+'</div>'+
         '<div class="field" style="margin-top:12px"><span>الصورة الشخصية</span><div class="row">'+
           '<button class="btn alt" data-photo="'+i+'">📷 '+(k.photo?'تغيير الصورة':'رفع صورة من الجهاز')+'</button>'+
           (k.photo?'<button class="btn danger" data-nophoto="'+i+'">إزالة الصورة</button>':'')+'</div></div>'+
         '<div class="field" style="margin-top:12px"><span>'+(k.photo?'أو اختر حيواناً (يظهر عند إزالة الصورة)':'أو اختر حيواناً')+'</span><div class="avpick">'+AVATARS.map(function(a){return '<button data-av="'+i+'|'+a+'" class="'+(k.avatar===a&&!k.photo?'on':'')+'" aria-label="اختيار '+a+'">'+a+'</button>';}).join('')+'</div></div></div>';
     }).join('')+(D.kids.length<6?'<button class="btn" data-addkid>+ إضافة بطل جديد</button>':'')+
+    '<div class="box"><h3>📜 الشهادات</h3><label class="field"><span>اسم الموقّع على الشهادات</span><input data-set="certSigner" maxlength="40" placeholder="والداك المحبّان" value="'+esc(D.set.certSigner||'')+'"></label></div>'+
     '<div class="box"><h3>🔐 كلمة مرور الوالدين</h3><p class="note">تُطلب لفتح هذه اللوحة، وللموافقة على «الزهرة» إن فعّلت ذلك.</p><button class="btn alt" data-changepw>تغيير كلمة المرور</button></div>';
   }
   if(PT==='learn'){
@@ -1764,6 +1948,7 @@ function renderParent(){
       '<p class="note">لا يمكن التراجع، صدّر نسخة احتياطية أولاً.</p></div>';
   }
   if(PT==='sync')body=syncTabHtml();
+  if(PT==='plan')body=planTabHtml();
   if(PT==='recs'){
     var any=false;
     body='<div class="box"><h3>🎙️ تسجيلات التسميع</h3><p class="note">بعد أن يسمع الطفل السورة '+ar(D.set.t3)+' مرات، يسجّل قراءته من حفظه. استمع ثم وافق لتصير زهرة 🌸، أو أعده للمراجعة. التسجيلات محفوظة على هذا الجهاز فقط.</p></div>'+
@@ -1812,6 +1997,8 @@ document.getElementById('openParent').addEventListener('click',openParent);
 
 document.addEventListener('change',function(e){
   var t=e.target;
+  if(t.dataset.gender!=null){D.kids[+t.dataset.gender].gender=t.value==='f'?'f':'m';save();toast('تم ✔');}
+  if(t.dataset.set==='certSigner'){D.set.certSigner=t.value.trim().slice(0,40);save();toast('تم ✔');return;}
   if(t.dataset.plan!=null){var pk4=D.kids[+t.dataset.plan];pk4.plan=clamp(parseInt(t.value,10)||1,1,ORDER.length);save();render();renderParent();toast('تم تحديث خطة '+pk4.name+' ✔');}
   if(t.dataset.name!=null){D.kids[+t.dataset.name].name=t.value.trim().slice(0,20)||'بطل';save();renderKids();renderStats();}
   if(t.id==='photoFile'&&t.files[0]&&photoKid!=null){loadPhoto(t.files[0]);t.value='';}
@@ -1841,6 +2028,17 @@ document.addEventListener('click',function(e){
   if(ds.close){document.getElementById(ds.close).hidden=true;if(ds.close==='parentOv')render();return;}
   if(ds.update!=null){updStart();return;}
   if(ds.meaning){openMeaning(+ds.meaning);return;}
+  if(ds.portion!=null){openPortion();return;}
+  if(ds.planextra!=null){planExtra();return;}
+  if(ds.plansave!=null){var pi=+ds.plansave,pkk=D.kids[pi],to=+document.getElementById('pto'+pi).value,dl=document.getElementById('pdl'+pi).value;
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(dl)||daysBetween(dkey(),dl)<0){toast('اختر موعداً في المستقبل');return;}
+    pkk.planCfg={to:to,deadline:dl,start:dkey()};pkk.planPos=null;pkk.planDay=null;pkk.planCfg.startRem=planRemaining(pkk);if(to+1>pkk.plan)pkk.plan=to+1;
+    save();render();renderParent();toast('📅 تم حفظ الخطة');return;}
+  if(ds.planstop!=null){var ps=D.kids[+ds.planstop];ps.planCfg=null;ps.planDay=null;save();render();renderParent();toast('تم إيقاف الخطة');return;}
+  if(ds.cert){var cv=ds.cert;openCert(cv.charAt(0)==='z'?{type:'zone',zi:+cv.slice(1),date:K().zd[+cv.slice(1)]||''}:{type:'surah',n:+cv.slice(1),date:K().memAt[+cv.slice(1)]||''});return;}
+  if(ds.certshare!=null){certShare();return;}
+  if(ds.certsave!=null){certSave();return;}
+  if(ds.certprint!=null){certPrint();return;}
   if(ds.mans!=null&&MEAN.ans==null){var mq=(KIDS_MEANING[MEAN.n]||{}).q;MEAN.ans=+ds.mans;if(mq&&MEAN.ans===mq[2]){chime([659,880]);var mk=K();mk.flags=mk.flags||{};var fk='mq'+MEAN.n;if(!mk.flags[fk]){mk.flags[fk]=1;addPts(mk,5,'سؤال سورة '+SURAHS[MEAN.n][0]);save();toast('+٥ نقاط ⭐');}}else chime([330,262]);drawMeaning();return;}
   if(ds.tjtoggle!=null){D.set.tajweed=!tjOn();save();renderPlayer();renderReader(true);return;}
   if(ds.tj){tjExplain(ds.tj);return;}
@@ -1957,7 +2155,7 @@ document.addEventListener('click',function(e){
 });
 document.addEventListener('keydown',function(e){
   if(e.key==='Escape'){
-    var open=['cheerOv','gateOv','recOv','quizOv','meanOv','badgeOv','parentOv'].filter(function(id){return !document.getElementById(id).hidden;});
+    var open=['cheerOv','gateOv','recOv','certOv','quizOv','meanOv','badgeOv','parentOv'].filter(function(id){return !document.getElementById(id).hidden;});
     if(open.length)document.getElementById(open[0]).hidden=true;else if(S.sel)closeSurah();
   }
   if((e.key==='Enter'||e.key===' ')&&e.target.classList&&e.target.classList.contains('ay')){e.preventDefault();var v=e.target.dataset.ay;if(v&&v!=='b')playFromAyah(+v);}
@@ -2177,7 +2375,7 @@ render();
 window.qgBack=function(){
   if(G){closeGame();return true;}
   if(!document.getElementById('recOv').hidden){recCancel();return true;}
-  var ids=['cheerOv','gateOv','quizOv','meanOv','badgeOv','welcomeOv','parentOv'];
+  var ids=['cheerOv','gateOv','certOv','quizOv','meanOv','badgeOv','welcomeOv','parentOv'];
   for(var i=0;i<ids.length;i++){var el=document.getElementById(ids[i]);if(!el.hidden){el.hidden=true;if(ids[i]==='parentOv')render();return true;}}
   if(S.sel){closeSurah();return true;}
   return false;
