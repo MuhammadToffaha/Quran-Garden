@@ -9,6 +9,8 @@
         android:maxSdkVersion="28" />
     <!-- In-app updates: lets the app open the Android installer for a new version -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <!-- Android 12+: lets the app update itself in the background without a prompt -->
+    <uses-permission android:name="android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION" />
 
     <!-- Android 11+: needed to find the phone's text-to-speech engine (says the kids' names) -->
     <queries>
@@ -23,6 +25,8 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/Theme.QuranGarden">
+
+        <receiver android:name=".InstallReceiver" android:exported="false" />
 
         <activity
             android:name=".MainActivity"

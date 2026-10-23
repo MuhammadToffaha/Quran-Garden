@@ -15,6 +15,9 @@ android {
         val run = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 1
         versionCode = run
         versionName = "1.$run"
+        // Fingerprint of the native (Kotlin/manifest) code. Releases with the same fingerprint
+        // only changed the page, so the app can update itself silently without reinstalling.
+        buildConfigField("String", "NATIVE_HASH", "\"${System.getenv("NATIVE_HASH") ?: "dev"}\"")
     }
 
     // One fixed signing key for every build. Android only installs an update over the
@@ -33,6 +36,10 @@ android {
             isMinifyEnabled = false
             signingConfig = signingConfigs.getByName("family")
         }
+    }
+
+    buildFeatures {
+        buildConfig = true
     }
 
     compileOptions {

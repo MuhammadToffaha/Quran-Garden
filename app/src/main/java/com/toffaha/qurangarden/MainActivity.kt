@@ -3,6 +3,9 @@ package com.toffaha.qurangarden
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.DownloadManager
+import android.app.PendingIntent
+import android.content.BroadcastReceiver
+import android.content.pm.PackageInstaller
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
@@ -37,6 +40,8 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.webkit.WebViewAssetLoader
 import java.io.File
 import java.util.Locale
+import java.util.zip.ZipInputStream
+import org.json.JSONObject
 
 /**
  * Quran Garden — a thin Android shell around the web app.
@@ -80,7 +85,12 @@ class MainActivity : ComponentActivity() {
             systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         }
 
+        // Silent web updates: a newer copy of the page (downloaded in the background)
+        // is served from internal storage first; anything missing falls back to the APK assets.
+        applyPendingWeb()
+        val webDir = File(filesDir, "web/current").apply { mkdirs() }
         val assetLoader = WebViewAssetLoader.Builder()
+            .addPathHandler("/assets/www/", WebViewAssetLoader.InternalStoragePathHandler(this, webDir))
             .addPathHandler("/assets/", WebViewAssetLoader.AssetsPathHandler(this))
             .build()
 
@@ -175,6 +185,24 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        // Away for a while and a new version is waiting → switch to it now (the login screen shows anyway).
+        if (stoppedAt > 0 && System.currentTimeMillis() - stoppedAt > 5 * 60_000 &&
+            prefs.getInt("nextVer", 0) > 0) {
+            applyPendingWeb(); web.reload()
+        }
+        stoppedAt = 0
+        checkSilent(false)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        stoppedAt = System.currentTimeMillis()
+        // The app is in the background: a good moment to install a downloaded APK silently.
+        installReadyApkSilently()
+    }
+
     override fun onDestroy() {
         tts?.stop()
         tts?.shutdown()
@@ -237,6 +265,33 @@ class MainActivity : ComponentActivity() {
 
         @JavascriptInterface
         fun isApp(): Boolean = true
+
+        /** Version the kid is really running: the APK, or a newer page downloaded silently. */
+        @JavascriptInterface
+        fun webVersion(): Int = maxOf(ownVersion(), prefs.getInt("webVer", 0))
+
+        /** "on" = updates install by themselves, "confirm" = needs one tap, "off" = turned off by the parent. */
+        @JavascriptInterface
+        fun silentMode(): String = when {
+            !prefs.getBoolean("auto", true) -> "off"
+            prefs.getBoolean("confirm", false) -> "confirm"
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !packageManager.canRequestPackageInstalls() &&
+                prefs.getString("pendingKind", "") == "apk" -> "confirm"
+            else -> "on"
+        }
+
+        /** Waiting update: version number, 0 if none. Applied next time the app opens. */
+        @JavascriptInterface
+        fun pendingVersion(): Int = maxOf(prefs.getInt("nextVer", 0), prefs.getInt("apkVer", 0))
+
+        @JavascriptInterface
+        fun setAutoUpdate(on: Boolean) {
+            prefs.edit().putBoolean("auto", on).apply()
+            if (on) checkSilent(true)
+        }
+
+        @JavascriptInterface
+        fun checkSilentNow() = checkSilent(true)
 
         /** Installed version, compared with the latest GitHub release (tag v1.<versionCode>). */
         @JavascriptInterface
@@ -353,6 +408,166 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    // ---------- silent update ----------
+    private val prefs by lazy { getSharedPreferences("qg-update", Context.MODE_PRIVATE) }
+    private var stoppedAt = 0L
+    @Volatile private var checking = false
+
+    private fun ownVersion(): Int = try {
+        val info = packageManager.getPackageInfo(packageName, 0)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) info.longVersionCode.toInt()
+        else @Suppress("DEPRECATION") info.versionCode
+    } catch (e: Exception) { 0 }
+
+    /** Moves a downloaded page into place, and drops copies that are older than the installed APK. */
+    private fun applyPendingWeb() {
+        val root = File(filesDir, "web")
+        val cur = File(root, "current")
+        val next = File(root, "next")
+        val nextVer = prefs.getInt("nextVer", 0)
+        val ed = prefs.edit()
+        if (nextVer > 0 && File(next, "index.html").exists()) {
+            cur.deleteRecursively()
+            if (next.renameTo(cur)) ed.putInt("webVer", nextVer)
+        }
+        ed.remove("nextVer")
+        if (prefs.getInt("webVer", 0) <= ownVersion()) {
+            File(cur, "index.html").delete(); cur.deleteRecursively(); cur.mkdirs(); ed.remove("webVer")
+        }
+        if (prefs.getInt("apkVer", 0) <= ownVersion()) {
+            File(getExternalFilesDir(null), "updates").deleteRecursively()
+            ed.remove("apkVer").remove("apkPath").remove("confirm").remove("pendingKind")
+        }
+        ed.apply()
+    }
+
+    private fun http(url: String, accept: String): java.net.HttpURLConnection {
+        var u = url
+        repeat(6) {
+            val c = java.net.URL(u).openConnection() as java.net.HttpURLConnection
+            c.instanceFollowRedirects = false
+            c.connectTimeout = 15000
+            c.readTimeout = 60000
+            c.setRequestProperty("User-Agent", "QuranGarden-Android")
+            c.setRequestProperty("Accept", accept)
+            val code = c.responseCode
+            if (code in 300..399) {
+                val loc = c.getHeaderField("Location") ?: throw Exception("redirect")
+                c.disconnect()
+                if (!loc.startsWith("https://")) throw Exception("insecure redirect")
+                u = loc
+            } else if (code in 200..299) return c
+            else { c.disconnect(); throw Exception("HTTP $code") }
+        }
+        throw Exception("too many redirects")
+    }
+
+    /** Background check: page-only changes are downloaded and applied silently; native changes download the APK. */
+    private fun checkSilent(force: Boolean) {
+        if (!prefs.getBoolean("auto", true) || checking) return
+        val now = System.currentTimeMillis()
+        if (!force && now - prefs.getLong("lastCheck", 0) < 30 * 60_000) return
+        checking = true
+        Thread {
+            try {
+                val c = http(API_LATEST, "application/vnd.github+json")
+                val j = JSONObject(c.inputStream.bufferedReader().use { it.readText() })
+                prefs.edit().putLong("lastCheck", now).apply()
+                val n = Regex("^v?\\d+\\.(\\d+)$").find(j.optString("tag_name"))?.groupValues?.get(1)?.toIntOrNull() ?: 0
+                val have = maxOf(ownVersion(), prefs.getInt("webVer", 0), prefs.getInt("nextVer", 0))
+                if (n <= have) return@Thread
+                val assets = j.optJSONArray("assets")
+                val urls = HashMap<String, String>()
+                if (assets != null) for (i in 0 until assets.length()) {
+                    val a = assets.getJSONObject(i)
+                    urls[a.optString("name")] = a.optString("browser_download_url")
+                }
+                val nativeUrl = urls["native.txt"]
+                val releaseNative = nativeUrl?.let {
+                    http(it, "*/*").inputStream.bufferedReader().use { r -> r.readText().trim() }
+                } ?: ""
+                val zipUrl = urls["www.zip"]
+                if (zipUrl != null && releaseNative.isNotEmpty() && releaseNative == BuildConfig.NATIVE_HASH) {
+                    downloadWeb(zipUrl, n)
+                } else if (n > prefs.getInt("apkVer", 0)) {
+                    val apkUrl = urls["quran-garden.apk"] ?: return@Thread
+                    if (!apkUrl.startsWith(UPDATE_PREFIX)) return@Thread
+                    downloadApk(apkUrl, n)
+                }
+            } catch (e: Exception) {
+                // offline or rate-limited: try again later
+            } finally {
+                checking = false
+            }
+        }.start()
+    }
+
+    private fun downloadWeb(url: String, ver: Int) {
+        val root = File(filesDir, "web")
+        val tmp = File(root, "next.tmp")
+        tmp.deleteRecursively(); tmp.mkdirs()
+        val base = tmp.canonicalPath + File.separator
+        ZipInputStream(http(url, "*/*").inputStream.buffered()).use { zin ->
+            while (true) {
+                val e = zin.nextEntry ?: break
+                val out = File(tmp, e.name)
+                if (!out.canonicalPath.startsWith(base)) throw Exception("bad zip entry")
+                if (e.isDirectory) out.mkdirs() else {
+                    out.parentFile?.mkdirs()
+                    out.outputStream().use { zin.copyTo(it) }
+                }
+            }
+        }
+        if (!File(tmp, "index.html").exists()) { tmp.deleteRecursively(); return }
+        val next = File(root, "next")
+        next.deleteRecursively()
+        if (tmp.renameTo(next)) {
+            prefs.edit().putInt("nextVer", ver).putString("pendingKind", "web").apply()
+            runOnUiThread { notifyPage("webready", ver) }
+        }
+    }
+
+    private fun downloadApk(url: String, ver: Int) {
+        val dir = File(getExternalFilesDir(null), "updates").apply { mkdirs() }
+        val part = File(dir, "silent-$ver.part")
+        val apk = File(dir, "silent-$ver.apk")
+        http(url, "application/octet-stream").inputStream.use { inp -> part.outputStream().use { inp.copyTo(it) } }
+        if (part.length() < 100_000 || !part.renameTo(apk)) { part.delete(); return }
+        prefs.edit().putInt("apkVer", ver).putString("apkPath", apk.absolutePath)
+            .putString("pendingKind", "apk").remove("confirm").apply()
+        runOnUiThread { notifyPage("apkready", ver) }
+    }
+
+    /** Android 12+: an app that installed itself can update itself without a prompt. */
+    private fun installReadyApkSilently() {
+        if (!prefs.getBoolean("auto", true) || prefs.getBoolean("confirm", false)) return
+        val ver = prefs.getInt("apkVer", 0)
+        val apk = File(prefs.getString("apkPath", "") ?: "")
+        if (ver <= ownVersion() || !apk.exists()) return
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) { prefs.edit().putBoolean("confirm", true).apply(); return }
+        if (!packageManager.canRequestPackageInstalls()) return
+        try {
+            val pi = packageManager.packageInstaller
+            val params = PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL)
+            params.setAppPackageName(packageName)
+            params.setRequireUserAction(PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED)
+            val id = pi.createSession(params)
+            pi.openSession(id).use { s ->
+                s.openWrite("base.apk", 0, apk.length()).use { out ->
+                    apk.inputStream().use { it.copyTo(out) }
+                    s.fsync(out)
+                }
+                val pending = PendingIntent.getBroadcast(
+                    this, id, Intent(this, InstallReceiver::class.java),
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
+                )
+                s.commit(pending.intentSender)
+            }
+        } catch (e: Exception) {
+            prefs.edit().putBoolean("confirm", true).apply()
+        }
+    }
+
     private fun openInstaller(apk: File) {
         try {
             val uri = FileProvider.getUriForFile(this, "$packageName.files", apk)
@@ -368,6 +583,17 @@ class MainActivity : ComponentActivity() {
     companion object {
         private const val APP_HOST = "appassets.androidplatform.net"
         private const val START_URL = "https://$APP_HOST/assets/www/index.html"
+        private const val API_LATEST = "https://api.github.com/repos/MuhammadToffaha/Quran-Garden/releases/latest"
         private const val UPDATE_PREFIX = "https://github.com/MuhammadToffaha/Quran-Garden/releases/download/"
+    }
+}
+
+/** Result of a silent install. If Android still wants a tap, fall back to the normal update button. */
+class InstallReceiver : BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent) {
+        val status = intent.getIntExtra(PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_FAILURE)
+        if (status != PackageInstaller.STATUS_SUCCESS) {
+            context.getSharedPreferences("qg-update", Context.MODE_PRIVATE).edit().putBoolean("confirm", true).apply()
+        }
     }
 }

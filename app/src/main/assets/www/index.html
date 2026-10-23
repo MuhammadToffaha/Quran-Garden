@@ -2290,6 +2290,7 @@ document.addEventListener('click',function(e){
   if(ds.logout!=null){logout();return;}
   if(ds.whoopen!=null){openWhoAmI(false);return;}
   if(ds.update!=null){updStart();return;}
+  if(ds.autoupd!=null){try{AndroidBridge.setAutoUpdate(ds.autoupd==='1');}catch(e){}renderParent();updRefresh();toast(ds.autoupd==='1'?'🤫 التحديث التلقائي يعمل':'⏸️ تم إيقاف التحديث التلقائي');return;}
   if(ds.meaning){openMeaning(+ds.meaning);return;}
   if(ds.portion!=null){openPortion();return;}
   if(ds.planextra!=null){planExtra();return;}
@@ -2307,7 +2308,7 @@ document.addEventListener('click',function(e){
   if(ds.tjtoggle!=null){D.set.tajweed=!tjOn();save();renderPlayer();renderReader(true);return;}
   if(ds.tj){tjExplain(ds.tj);return;}
   if(ds.badges!=null){checkBadges();openBadges();return;}
-  if(ds.updcheck!=null){b.disabled=true;b.textContent='جارٍ التحقق…';updCheck(true).then(function(){toast(updAvailable()?'🎁 يوجد تحديث جديد':'✅ لديك أحدث إصدار');renderParent();});return;}
+  if(ds.updcheck!=null){b.disabled=true;b.textContent='جارٍ التحقق…';(function(){try{AndroidBridge.checkSilentNow();}catch(e){}})();updCheck(true).then(function(){toast(updAvailable()?'🎁 يوجد تحديث جديد':'✅ لديك أحدث إصدار');renderParent();});return;}
   if(ds.embedcreate!=null){createFamily(EMBED,b);return;}
   if(ds.copycode!=null){copyText(fmtCode(SYNC.code));return;}
   if(ds.joincode!=null){var cin=document.getElementById(ds.joincode==='w'?'wCode':'famCodeIn'),cc=cleanCode(cin&&cin.value);
@@ -2581,7 +2582,7 @@ var UPD={cur:0,latest:0,url:'',notes:'',state:'',pct:0,checked:0,err:''};
 function isAndroidApp(){try{return !!(window.AndroidBridge&&AndroidBridge.versionCode);}catch(e){return false;}}
 function updCheck(force){
   if(!isAndroidApp())return Promise.resolve();
-  try{UPD.cur=AndroidBridge.versionCode();}catch(e){}
+  try{UPD.cur=AndroidBridge.versionCode();}catch(e){}try{UPD.cur=Math.max(UPD.cur,AndroidBridge.webVersion());}catch(e){}
   var cache=null;try{cache=JSON.parse(localStorage.getItem('qg-upd')||'null');}catch(e){}
   if(!force&&cache&&Date.now()-cache.t<6*3600e3){Object.assign(UPD,{latest:cache.n,url:cache.u,notes:cache.m,body:cache.b||'',checked:cache.t});updRefresh();return Promise.resolve();}
   return fetch('https://api.github.com/repos/'+UPD_REPO+'/releases/latest',{headers:{Accept:'application/vnd.github+json'}})
@@ -2614,6 +2615,8 @@ function historyHtml(){
   return HIST.list.map(function(r){var m=/^v?\d+\.(\d+)$/.exec(r.tag),n=m?+m[1]:0;
     return '<details class="updnotes"'+(n===UPD.cur?' open':'')+'><summary><b dir="ltr">'+esc(r.tag)+'</b> · '+esc(r.date)+(n===UPD.cur?' ← المثبّت عندك':n>UPD.cur&&UPD.cur?' 🆕':'')+'</summary>'+notesHtml(r.body)+'</details>';}).join('');
 }
+function updSilent(){try{return AndroidBridge.silentMode();}catch(e){return 'none';}}
+function updPending(){try{return AndroidBridge.pendingVersion();}catch(e){return 0;}}
 function updAvailable(){return isAndroidApp()&&UPD.latest>UPD.cur&&!!UPD.url;}
 function updStatusText(){
   if(UPD.state==='progress')return '⬇️ جارٍ التنزيل… '+ar(UPD.pct)+'٪';
@@ -2623,7 +2626,7 @@ function updStatusText(){
   return '';
 }
 function updBannerHtml(){
-  if(!updAvailable())return '';
+  if(!updAvailable()||(updSilent()==='on'&&!UPD.state))return '';
   var st=updStatusText();
   return '<section class="updbanner" role="status"><div><b>🎁 تحديث جديد متوفر!</b> <span dir="ltr">v1.'+UPD.latest+'</span>'+
     '<div class="updst">الإصدار الحالي <b dir="ltr">v1.'+UPD.cur+'</b> ← الجديد <b dir="ltr">v1.'+UPD.latest+'</b></div>'+
@@ -2633,7 +2636,16 @@ function updBannerHtml(){
 }
 function updateBoxHtml(){
   if(!isAndroidApp())return '<div class="box"><h3>🔄 التحديثات</h3><p class="note">التحديث من داخل التطبيق متاح في تطبيق أندرويد فقط.</p></div>';
-  return '<div class="box"><h3>🔄 التحديثات</h3><p>الإصدار الحالي: <b dir="ltr">v1.'+UPD.cur+'</b>'+
+  var sm=updSilent(),pv=updPending();
+  return '<div class="box"><h3>🔄 التحديثات</h3>'+
+    (sm!=='none'?'<div class="row" style="align-items:center;justify-content:space-between;background:var(--line);border-radius:14px;padding:10px 14px;margin-bottom:10px">'+
+      '<div><b>🤫 التحديث التلقائي الصامت</b><div class="note" style="margin:2px 0 0">'+
+      (sm==='off'?'متوقف — التحديث بزر «تحديث الآن» فقط.':
+       sm==='confirm'?'👆 هذه المرة يحتاج أندرويد ضغطة «تثبيت» واحدة. بعدها يصير صامتاً.':
+       'ينزل التحديث في الخلفية ويُطبَّق تلقائياً عند فتح التطبيق مرة أخرى.')+
+      (pv>UPD.cur&&sm!=='off'?'<br>✅ الإصدار <b dir="ltr">v1.'+pv+'</b> جاهز، يُطبَّق عند الفتح القادم.':'')+'</div></div>'+
+      '<button class="btn '+(sm==='off'?'':'alt')+'" data-autoupd="'+(sm==='off'?'1':'0')+'">'+(sm==='off'?'▶️ تشغيل':'⏸️ إيقاف')+'</button></div>':'')+
+    '<p>الإصدار الحالي: <b dir="ltr">v1.'+UPD.cur+'</b>'+
     (UPD.latest?' · أحدث إصدار: <b dir="ltr">v1.'+UPD.latest+'</b>':'')+'</p>'+
     (updAvailable()?'<p>'+(updStatusText()||'🎁 يوجد تحديث جديد')+'</p><button class="btn" data-update>⬇️ تحديث الآن</button>':
       (UPD.latest?'<p>✅ لديك أحدث إصدار</p>':''))+
@@ -2646,7 +2658,7 @@ function updRefresh(){
   if(b){if(html)b.outerHTML=html;else b.remove();}else if(html&&m)m.insertAdjacentHTML('afterbegin',html);
   if(!document.getElementById('parentOv').hidden&&PT==='backup')renderParent();
 }
-window.qgUpdateState=function(state,val){UPD.state=state;UPD.pct=val||0;updRefresh();if(state==='ready')setTimeout(function(){UPD.state='';updRefresh();},8000);};
+window.qgUpdateState=function(state,val){if(state==='webready'||state==='apkready'){if(!document.getElementById('parentOv').hidden&&PT==='backup')renderParent();return;}UPD.state=state;UPD.pct=val||0;updRefresh();if(state==='ready')setTimeout(function(){UPD.state='';updRefresh();},8000);};
 function updStart(){
   if(!updAvailable())return;
   UPD.state='progress';UPD.pct=0;updRefresh();

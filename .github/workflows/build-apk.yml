@@ -23,8 +23,20 @@ jobs:
         with:
           gradle-version: "8.9"
 
+      # Fingerprint of everything native. If it is unchanged, installed apps update
+      # silently by downloading www.zip only (no reinstall).
+      - name: Native fingerprint
+        run: |
+          H=$(git ls-files app/src/main/java app/src/main/res app/src/main/AndroidManifest.xml app/build.gradle.kts build.gradle.kts settings.gradle.kts gradle.properties keystore | sort | xargs sha256sum | sha256sum | cut -c1-16)
+          echo "NATIVE_HASH=$H" >> "$GITHUB_ENV"
+          echo "$H" > native.txt
+          echo "native fingerprint: $H"
+
       - name: Build installable APK
         run: gradle :app:assembleRelease --no-daemon --stacktrace
+
+      - name: Pack the web app
+        run: (cd app/src/main/assets/www && zip -qr "$GITHUB_WORKSPACE/www.zip" .)
 
       - name: Name the APK
         run: cp app/build/outputs/apk/release/app-release.apk quran-garden.apk
@@ -46,7 +58,7 @@ jobs:
             awk 'BEGIN{n=0} /^## /{n++; if(n==2) exit; next} n==1{print}' CHANGELOG.md > notes.md
           fi
           if [ ! -s notes.md ]; then git log -1 --pretty=%s > notes.md; fi
-          gh release create "$TAG" quran-garden.apk \
+          gh release create "$TAG" quran-garden.apk www.zip native.txt \
             --title "حديقة القرآن ${TAG}" \
             --notes-file notes.md \
             --latest
