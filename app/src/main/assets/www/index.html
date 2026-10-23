@@ -2642,7 +2642,7 @@ function updateBoxHtml(){
       '<div><b>🤫 التحديث التلقائي الصامت</b><div class="note" style="margin:2px 0 0">'+
       (sm==='off'?'متوقف — التحديث بزر «تحديث الآن» فقط.':
        sm==='confirm'?'👆 هذه المرة يحتاج أندرويد ضغطة «تثبيت» واحدة. بعدها يصير صامتاً.':
-       'ينزل التحديث في الخلفية ويُطبَّق تلقائياً عند فتح التطبيق مرة أخرى.')+
+       'يدوّر على تحديث مرة كل يوم، ينزل في الخلفية ويُطبَّق تلقائياً عند فتح التطبيق مرة أخرى.')+
       (pv>UPD.cur&&sm!=='off'?'<br>✅ الإصدار <b dir="ltr">v1.'+pv+'</b> جاهز، يُطبَّق عند الفتح القادم.':'')+'</div></div>'+
       '<button class="btn '+(sm==='off'?'':'alt')+'" data-autoupd="'+(sm==='off'?'1':'0')+'">'+(sm==='off'?'▶️ تشغيل':'⏸️ إيقاف')+'</button></div>':'')+
     '<p>الإصدار الحالي: <b dir="ltr">v1.'+UPD.cur+'</b>'+
@@ -2651,7 +2651,8 @@ function updateBoxHtml(){
       (UPD.latest?'<p>✅ لديك أحدث إصدار</p>':''))+
     (UPD.err?'<p style="color:#A3262A">'+esc(UPD.err)+'</p>':'')+
     ' <button class="btn alt" data-updcheck>🔍 التحقق الآن</button>'+
-    '<h3 style="margin:16px 0 6px">📋 سجل التحديثات</h3>'+historyHtml()+'</div>';
+    '<h3 style="margin:16px 0 6px">📋 سجل التحديثات</h3>'+historyHtml()+'</div>'+
+    '<p class="note" dir="ltr" style="text-align:center;opacity:.7;margin:14px 0 4px">Designed by Muhammad Toffaha</p>';
 }
 function updRefresh(){
   var m=document.getElementById('main'),b=m&&m.querySelector('.updbanner'),html=updBannerHtml();

@@ -466,7 +466,7 @@ class MainActivity : ComponentActivity() {
     private fun checkSilent(force: Boolean) {
         if (!prefs.getBoolean("auto", true) || checking) return
         val now = System.currentTimeMillis()
-        if (!force && now - prefs.getLong("lastCheck", 0) < 30 * 60_000) return
+        if (!force && now - prefs.getLong("lastCheck", 0) < 24 * 3600_000L) return   // once a day
         checking = true
         Thread {
             try {
