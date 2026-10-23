@@ -506,6 +506,12 @@ body{transition:background .4s}
 <section id="player" role="dialog" aria-modal="true" aria-label="قراءة السورة" hidden><div id="shead"></div><button class="focusPause" data-act="toggle" aria-label="إيقاف مؤقت وإظهار الأزرار"><svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4" width="5" height="16" rx="1.5" fill="currentColor"/><rect x="14" y="4" width="5" height="16" rx="1.5" fill="currentColor"/></svg></button><div id="reader" aria-live="off"></div><div id="pctrl"></div></section>
 <audio id="audio" preload="auto"></audio>
 
+<div class="overlay" id="updPopOv" hidden style="z-index:60;align-items:center"><div class="modal" role="dialog" aria-modal="true" style="width:min(100%,400px);text-align:center">
+  <div style="font-size:48px;line-height:1">🎁</div>
+  <h2 id="updPopT" style="margin:8px 0 4px">تحديث جديد! 🎉</h2>
+  <p class="note">نسخة أحدث من حديقة القرآن جاهزة — حدّث الآن لتحصل على آخر المميزات.</p>
+  <div style="display:flex;gap:10px;margin-top:14px"><button class="btn" id="updPopGo" style="flex:1">⬇️ تحديث الآن</button><button class="pill" id="updPopLater" style="flex:1">لاحقاً</button></div>
+</div></div>
 <div class="overlay" id="gateOv" hidden style="z-index:55"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="gateT" id="gateBox"></div></div>
 <div class="overlay" id="parentOv" hidden><div class="modal wide" role="dialog" aria-modal="true" aria-labelledby="parentT" id="parentBox"></div></div>
 <div class="overlay" id="quizOv" hidden style="z-index:52"><div class="modal" role="dialog" aria-modal="true" aria-label="اختبار" id="quizBox" style="width:min(100%,720px)"></div></div>
@@ -2613,7 +2619,7 @@ function loadHistory(){
 function historyHtml(){
   if(!HIST.list)return '<p class="note">'+(HIST.err||'⏳ جارٍ التحميل…')+'</p>';
   return HIST.list.map(function(r){var m=/^v?\d+\.(\d+)$/.exec(r.tag),n=m?+m[1]:0;
-    return '<details class="updnotes"'+(n===UPD.cur?' open':'')+'><summary><b dir="ltr">'+esc(r.tag)+'</b> · '+esc(r.date)+(n===UPD.cur?' ← المثبّت عندك':n>UPD.cur&&UPD.cur?' 🆕':'')+'</summary>'+notesHtml(r.body)+'</details>';}).join('');
+    return '<details class="updnotes"'+(n===UPD.cur?' open':'')+'><summary><b dir="ltr">'+esc(n?'1.0.'+n:r.tag)+'</b> · '+esc(r.date)+(n===UPD.cur?' ← المثبّت عندك':n>UPD.cur&&UPD.cur?' 🆕':'')+'</summary>'+notesHtml(r.body)+'</details>';}).join('');
 }
 function updSilent(){try{return AndroidBridge.silentMode();}catch(e){return 'none';}}
 function updPending(){try{return AndroidBridge.pendingVersion();}catch(e){return 0;}}
@@ -2665,7 +2671,17 @@ function updStart(){
   UPD.state='progress';UPD.pct=0;updRefresh();
   try{AndroidBridge.installUpdate(UPD.url);}catch(e){UPD.state='error';updRefresh();}
 }
-if(isAndroidApp()){setTimeout(function(){updCheck(false);},1500);
+// 🎁 small pop-up once per app start when a new version exists
+var updPopShown=false;
+function updPopup(){
+  if(updPopShown||!updAvailable())return;
+  updPopShown=true;
+  document.getElementById('updPopT').textContent='تحديث جديد '+'1.0.'+UPD.latest+' 🎉';
+  document.getElementById('updPopOv').hidden=false;
+}
+document.getElementById('updPopLater').onclick=function(){document.getElementById('updPopOv').hidden=true;};
+document.getElementById('updPopGo').onclick=function(){document.getElementById('updPopOv').hidden=true;updStart();};
+if(isAndroidApp()){setTimeout(function(){updCheck(false).then(updPopup);},1500);
   document.addEventListener('visibilitychange',function(){if(!document.hidden){if(UPD.state==='permission'){UPD.state='';updRefresh();}updCheck(false);}});}
 
 /* changes saved elsewhere on this device (another tab / the installed app) show up instantly */
