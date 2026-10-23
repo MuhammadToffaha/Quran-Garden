@@ -89,8 +89,14 @@ class MainActivity : ComponentActivity() {
         // is served from internal storage first; anything missing falls back to the APK assets.
         applyPendingWeb()
         val webDir = File(filesDir, "web/current").apply { mkdirs() }
+        // InternalStoragePathHandler answers an EMPTY response for a missing file (-> ERR_INVALID_RESPONSE),
+        // so only use it when the file really exists; otherwise fall through to the APK's own assets.
+        val internal = WebViewAssetLoader.InternalStoragePathHandler(this, webDir)
         val assetLoader = WebViewAssetLoader.Builder()
-            .addPathHandler("/assets/www/", WebViewAssetLoader.InternalStoragePathHandler(this, webDir))
+            .addPathHandler("/assets/www/") { path ->
+                val f = File(webDir, path)
+                if (f.isFile && f.canonicalPath.startsWith(webDir.canonicalPath + File.separator)) internal.handle(path) else null
+            }
             .addPathHandler("/assets/", WebViewAssetLoader.AssetsPathHandler(this))
             .build()
 
@@ -110,6 +116,11 @@ class MainActivity : ComponentActivity() {
         web.webViewClient = object : WebViewClient() {
             override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? =
                 assetLoader.shouldInterceptRequest(request.url)
+
+            // the page itself failed to load -> look for a fixed version right away (ignores the daily limit)
+            override fun onReceivedError(view: WebView, request: WebResourceRequest, error: android.webkit.WebResourceError) {
+                if (request.isForMainFrame) checkSilent(true)
+            }
 
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
                 val url = request.url
